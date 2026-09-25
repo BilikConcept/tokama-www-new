@@ -111,19 +111,19 @@ function buildGuestEmail(input: {
     : { guest: "Gość", stay: "Pobyt", adults: "Dorośli", children: "Dzieci", houses: "Domki", total: "Szacunkowa suma", payment: "Płatność nie jest jeszcze wymagana. Szczegóły otrzymasz po akceptacji rezerwacji przez hosta." };
 
   const html = `
-    <div style="margin:0;padding:32px 12px;background:#eeece5;font-family:Arial,Helvetica,sans-serif;color:#20211e;line-height:1.55;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;margin:0 auto;background:#fffdf8;">
-        <tr><td style="padding:28px 32px 18px;border-bottom:1px solid #dedbd1;">
-          <a href="https://tokama-www-new.vercel.app/" style="text-decoration:none;color:#20211e;">
-            <img src="https://tokama-www-new.vercel.app/tokama-logo.svg" width="142" alt="TOKAMA" style="display:block;border:0;max-width:142px;height:auto;" />
-            <span style="display:block;margin-top:6px;font-size:9px;letter-spacing:3px;color:#77766f;">WINDYKI · BLISKO NATURY</span>
+    <div style="margin:0;padding:32px 12px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111111;line-height:1.55;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;margin:0 auto;background:#ffffff;border:1px solid #e5e5e5;">
+        <tr><td style="padding:28px 32px 18px;border-bottom:1px solid #e5e5e5;text-align:center;">
+          <a href="https://tokama-www-new.vercel.app/" style="text-decoration:none;color:#111111;">
+            <img src="https://tokama-www-new.vercel.app/tokama-logo.svg" width="142" alt="TOKAMA" style="display:inline-block;border:0;max-width:142px;height:auto;" />
+            <span style="display:block;margin-top:6px;font-size:9px;letter-spacing:3px;color:#666666;">WINDYKI · BLISKO NATURY</span>
           </a>
         </td></tr>
         <tr><td style="padding:0;"><img src="https://tokama-www-new.vercel.app/email/tokama-hero.gif" width="620" alt="TOKAMA nad jeziorem" style="display:block;width:100%;height:auto;border:0;" /></td></tr>
         <tr><td style="padding:32px;">
-          <p style="margin:0 0 12px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#77766f;">TOKAMA · ${isEnglish ? "RESERVATION REQUEST" : "PROŚBA O REZERWACJĘ"}</p>
-          <h1 style="margin:0 0 16px;font-size:30px;line-height:1.12;font-weight:500;letter-spacing:-.5px;">${isEnglish ? "We have your request." : "Mamy Twoją prośbę."}</h1>
-          <p style="margin:0 0 26px;font-size:16px;color:#55564f;">${intro}</p>
+          <p style="margin:0 0 12px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#666666;text-align:center;">TOKAMA · ${isEnglish ? "RESERVATION REQUEST" : "PROŚBA O REZERWACJĘ"}</p>
+          <h1 style="margin:0 0 16px;font-size:30px;line-height:1.12;font-weight:500;letter-spacing:-.5px;text-align:center;">${isEnglish ? "We have your request." : "Mamy Twoją prośbę."}</h1>
+          <p style="margin:0 0 26px;font-size:16px;color:#444444;text-align:center;">${intro}</p>
           <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #dedbd1;border-bottom:1px solid #dedbd1;">
             <tr><td style="padding:12px 0;color:#77766f;font-size:12px;">${labels.guest}</td><td align="right" style="padding:12px 0;font-size:14px;font-weight:bold;">${input.guestName}</td></tr>
             <tr><td style="padding:12px 0;color:#77766f;font-size:12px;">${labels.stay}</td><td align="right" style="padding:12px 0;font-size:14px;font-weight:bold;">${formatDate(input.checkin)} — ${formatDate(input.checkout)}</td></tr>
@@ -131,7 +131,7 @@ function buildGuestEmail(input: {
             <tr><td style="padding:12px 0;color:#77766f;font-size:12px;">${labels.houses}</td><td align="right" style="padding:12px 0;font-size:14px;font-weight:bold;">${input.housesCount}</td></tr>
             <tr><td style="padding:12px 0;color:#77766f;font-size:12px;">${labels.total}</td><td align="right" style="padding:12px 0;font-size:18px;font-weight:bold;">${input.total}</td></tr>
           </table>
-          <p style="margin:24px 0 0;padding:16px;background:#f1efe8;color:#65665f;font-size:13px;">${labels.payment}</p>
+          <p style="margin:24px 0 0;padding:16px;background:#f7f7f7;color:#444444;font-size:13px;text-align:center;">${labels.payment}</p>
         </td></tr>
         <tr><td style="padding:22px 32px;background:#20211e;color:#e9e7df;font-size:11px;letter-spacing:.4px;">TOKAMA · Windyki 116 · Iława<br /><a href="https://tokama-www-new.vercel.app/" style="color:#e9e7df;">tokama-www-new.vercel.app</a></td></tr>
       </table>
@@ -165,10 +165,10 @@ function buildHostEmail(input: {
   return {
     subject: "TOKAMA — nowa rezerwacja",
     html: `
-      <div style="margin:0;padding:32px 12px;background:#eeece5;font-family:Arial,Helvetica,sans-serif;color:#20211e;line-height:1.55;">
-        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;margin:0 auto;background:#fffdf8;">
-          <tr><td style="padding:28px 32px 18px;border-bottom:1px solid #dedbd1;"><img src="https://tokama-www-new.vercel.app/tokama-logo.svg" width="142" alt="TOKAMA" style="display:block;border:0;max-width:142px;height:auto;" /><span style="display:block;margin-top:6px;font-size:9px;letter-spacing:3px;color:#77766f;">PANEL HOSTA · NOWA REZERWACJA</span></td></tr>
-          <tr><td style="padding:32px;"><p style="margin:0 0 12px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#77766f;">NOWE ZGŁOSZENIE</p><h1 style="margin:0 0 22px;font-size:30px;line-height:1.12;font-weight:500;">Nowa rezerwacja TOKAMA</h1>
+      <div style="margin:0;padding:32px 12px;background:#ffffff;font-family:Arial,Helvetica,sans-serif;color:#111111;line-height:1.55;">
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;margin:0 auto;background:#ffffff;border:1px solid #e5e5e5;">
+          <tr><td style="padding:28px 32px 18px;border-bottom:1px solid #e5e5e5;text-align:center;"><img src="https://tokama-www-new.vercel.app/tokama-logo.svg" width="142" alt="TOKAMA" style="display:inline-block;border:0;max-width:142px;height:auto;" /><span style="display:block;margin-top:6px;font-size:9px;letter-spacing:3px;color:#666666;">PANEL HOSTA · NOWA REZERWACJA</span></td></tr>
+          <tr><td style="padding:32px;"><p style="margin:0 0 12px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:#666666;text-align:center;">NOWE ZGŁOSZENIE</p><h1 style="margin:0 0 22px;font-size:30px;line-height:1.12;font-weight:500;text-align:center;">Nowa rezerwacja TOKAMA</h1>
             <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #dedbd1;border-bottom:1px solid #dedbd1;">
               <tr><td style="padding:12px 0;color:#77766f;font-size:12px;">Gość</td><td align="right" style="padding:12px 0;font-size:14px;font-weight:bold;">${input.guestName}</td></tr>
               <tr><td style="padding:12px 0;color:#77766f;font-size:12px;">Kontakt</td><td align="right" style="padding:12px 0;font-size:14px;font-weight:bold;">${input.guestEmail}<br />${input.guestPhone}</td></tr>
