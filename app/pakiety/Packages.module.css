@@ -1,0 +1,84 @@
+.listPage,
+.detailPage { background: #fff; color: #111; font-family: var(--font-sans), Arial, sans-serif; }
+.eyebrow { margin: 0; color: #777; font-size: 10px; letter-spacing: .24em; text-transform: uppercase; }
+.listHero { padding: 190px 6vw 90px; border-bottom: 1px solid rgba(17,17,17,.14); }
+.listHero h1 { max-width: 1000px; margin: 28px 0 0; font: 400 clamp(62px,9vw,132px)/.88 Georgia,serif; letter-spacing: -.075em; }
+.listHero h1 em,
+.bottomCta h2 em { font-weight: 400; }
+.packageGrid { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid rgba(17,17,17,.14); }
+.packageCard { min-width: 0; color: inherit; border-right: 1px solid rgba(17,17,17,.14); border-bottom: 1px solid rgba(17,17,17,.14); background: #fff; text-decoration: none; }
+.packageCard:nth-child(2n) { border-right: 0; }
+.cardMedia { position: relative; height: min(42vw,640px); min-height: 420px; overflow: hidden; background: #e9e9e6; }
+.cardMedia img,
+.cardMedia video { width: 100%; height: 100%; object-fit: cover; transition: transform .7s cubic-bezier(.2,.8,.2,1); }
+.packageCard:hover .cardMedia img,
+.packageCard:hover .cardMedia video { transform: scale(1.025); }
+.cardCopy { min-height: 360px; padding: 54px 6vw; }
+.cardCopy h2 { margin: 72px 0 20px; font: 400 clamp(42px,5vw,72px)/.95 Georgia,serif; letter-spacing: -.055em; }
+.cardCopy > span { display: block; max-width: 560px; color: #666; font-size: 15px; line-height: 1.55; }
+.cardCopy > strong { display: block; margin-top: 32px; font-size: 11px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
+.detailHero { position: relative; height: 100svh; min-height: 650px; overflow: hidden; background: #222; color: #fff; }
+.detailHero > img,
+.detailHero > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.heroShade { position: absolute; inset: 0; background: linear-gradient(180deg,rgba(0,0,0,.16),rgba(0,0,0,.7)); }
+.heroCopy { position: absolute; right: 6vw; bottom: 7vw; left: 6vw; }
+.heroCopy > p { margin: 0 0 26px; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; }
+.heroCopy h1 { max-width: 1100px; margin: 0; font: 400 clamp(58px,8vw,124px)/.88 Georgia,serif; letter-spacing: -.07em; text-wrap: balance; }
+.heroCopy > span { display: block; max-width: 680px; margin-top: 28px; color: rgba(255,255,255,.82); font-size: 17px; line-height: 1.6; }
+.detailIntro { display: grid; grid-template-columns: minmax(0,1.05fr) minmax(380px,.95fr); gap: 10vw; padding: 140px 6vw; border-bottom: 1px solid rgba(17,17,17,.14); }
+.detailIntro h2,
+.sectionHeading h2 { max-width: 760px; margin: 30px 0 0; font: 400 clamp(50px,6.5vw,98px)/.9 Georgia,serif; letter-spacing: -.065em; text-wrap: balance; }
+.detailText > p { margin: 0 0 24px; color: #555; font: 400 19px/1.7 Georgia,serif; }
+.bookingButton { display: inline-flex; align-items: center; justify-content: center; min-height: 58px; margin-top: 24px; padding: 0 24px; border: 1px solid #111; background: #111; color: #fff; text-decoration: none; transition: color .2s, background .2s; }
+.bookingButton:hover { color: #111; background: #fff; }
+.inclusions,
+.conditions { display: grid; grid-template-columns: minmax(260px,.75fr) minmax(460px,1.25fr); gap: 8vw; padding: 120px 6vw; border-bottom: 1px solid rgba(17,17,17,.14); }
+.inclusions > div:last-child,
+.conditionList { border-top: 1px solid rgba(17,17,17,.2); }
+.inclusions article { display: grid; grid-template-columns: 48px 1fr; gap: 22px; align-items: start; padding: 28px 0; border-bottom: 1px solid rgba(17,17,17,.2); }
+.inclusions article span { padding-top: 5px; color: #999; font-size: 9px; letter-spacing: .12em; }
+.inclusions article p { max-width: 760px; margin: 0; font: 400 clamp(22px,2.2vw,34px)/1.2 Georgia,serif; }
+.conditionList { display: grid; grid-template-columns: 1fr 1fr; }
+.conditionList article { min-height: 190px; padding: 30px; border-right: 1px solid rgba(17,17,17,.2); border-bottom: 1px solid rgba(17,17,17,.2); }
+.conditionList article:nth-child(2n) { border-right: 0; }
+.conditionList small { display: block; margin-bottom: 38px; color: #777; font-size: 9px; letter-spacing: .16em; text-transform: uppercase; }
+.conditionList strong { display: block; font: 400 clamp(20px,2vw,30px)/1.25 Georgia,serif; }
+.conditionList p { margin: 12px 0 0; color: #777; font-size: 13px; }
+.conditionList .conditionNote { grid-column: 1/-1; min-height: 0; border-right: 0; }
+.conditionNote strong { max-width: 760px; font-size: 20px; line-height: 1.55; }
+.gallery { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid rgba(17,17,17,.14); }
+.gallery figure { display: grid; min-height: 480px; margin: 0; overflow: hidden; place-items: center; border-right: 1px solid rgba(17,17,17,.14); border-bottom: 1px solid rgba(17,17,17,.14); background: #e9e9e6; }
+.gallery figure:nth-child(2n) { border-right: 0; }
+.gallery img,
+.gallery video { display: block; width: 100%; height: 100%; max-height: 86vh; object-fit: cover; }
+.bottomCta { padding: 120px 6vw; background: #111; color: #fff; }
+.bottomCta h2 { margin: 36px 0 50px; font: 400 clamp(60px,8vw,116px)/.88 Georgia,serif; letter-spacing: -.07em; }
+.bottomCta a { display: inline-flex; min-height: 56px; align-items: center; padding: 0 24px; border: 1px solid #fff; background: transparent; color: #fff; text-decoration: none; }
+.bottomCta .eyebrow { color: #999; }
+
+@media (max-width: 760px) {
+  .listHero { padding: 140px 24px 62px; }
+  .listHero h1 { font-size: 58px; }
+  .packageGrid { grid-template-columns: 1fr; }
+  .packageCard,
+  .packageCard:nth-child(2n) { border-right: 0; }
+  .cardMedia { height: 78vw; min-height: 320px; }
+  .cardCopy { min-height: 300px; padding: 40px 24px; }
+  .cardCopy h2 { margin-top: 52px; }
+  .detailHero { height: 88svh; min-height: 620px; }
+  .heroCopy { right: 24px; bottom: 48px; left: 24px; }
+  .heroCopy h1 { font-size: 56px; }
+  .detailIntro,
+  .inclusions,
+  .conditions { grid-template-columns: 1fr; gap: 54px; padding: 88px 24px; }
+  .detailIntro h2,
+  .sectionHeading h2 { font-size: 54px; }
+  .conditionList { grid-template-columns: 1fr; }
+  .conditionList article,
+  .conditionList article:nth-child(2n) { border-right: 0; }
+  .gallery { grid-template-columns: 1fr; }
+  .gallery figure,
+  .gallery figure:nth-child(2n) { min-height: 300px; border-right: 0; }
+  .bottomCta { padding: 84px 24px; }
+  .bottomCta h2 { font-size: 56px; }
+}

@@ -1,0 +1,435 @@
+.page {
+  overflow: hidden;
+  background: #fff;
+  color: #111;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(420px, 0.92fr);
+  min-height: 92vh;
+  padding: 138px 34px 34px;
+  gap: 48px;
+}
+
+.heroCopy {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 3vw 6vh;
+}
+
+.eyebrow {
+  margin: 0 0 28px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.hero h1,
+.manifest h2,
+.threeHouses h2,
+.location h2,
+.timeline h2,
+.cta h2 {
+  margin: 0;
+  font-size: clamp(52px, 6.5vw, 112px);
+  font-weight: 400;
+  line-height: 0.94;
+  letter-spacing: -0.055em;
+}
+
+.hero h1 em,
+.manifest h2 em,
+.threeHouses h2 em,
+.location h2 em,
+.timeline h2 em,
+.quote em,
+.cta h2 em {
+  font-family: var(--font-serif), Georgia, serif;
+  font-weight: 400;
+}
+
+.lead {
+  max-width: 620px;
+  margin: 48px 0 0;
+  font-size: clamp(17px, 1.35vw, 22px);
+  line-height: 1.55;
+  color: rgba(17, 17, 17, 0.72);
+}
+
+.heroImage,
+.sectionImage {
+  position: relative;
+  overflow: hidden;
+  background: #efefed;
+}
+
+.heroImage {
+  min-height: 680px;
+}
+
+.heroImage img,
+.sectionImage img {
+  object-fit: cover;
+}
+
+.manifest {
+  padding: 150px 7vw 170px;
+  border-top: 1px solid rgba(17, 17, 17, 0.12);
+}
+
+.manifestGrid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  align-items: end;
+  gap: 9vw;
+}
+
+.manifest h2 {
+  font-size: clamp(48px, 5.5vw, 94px);
+}
+
+.manifestText {
+  max-width: 510px;
+}
+
+.manifestText p,
+.sectionCopy > p,
+.locationDetails > p {
+  margin: 0;
+  font-size: clamp(17px, 1.25vw, 21px);
+  line-height: 1.65;
+  color: rgba(17, 17, 17, 0.72);
+}
+
+.manifestText p + p,
+.sectionCopy > p + p {
+  margin-top: 25px;
+}
+
+.threeHouses {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 850px;
+  background: #f1f0ec;
+}
+
+.sectionImage {
+  min-height: 720px;
+}
+
+.sectionCopy {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 110px 8vw;
+}
+
+.sectionCopy h2 {
+  margin-bottom: 55px;
+  font-size: clamp(48px, 5.2vw, 88px);
+}
+
+.location {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 10vw;
+  padding: 170px 7vw;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.12);
+}
+
+.location h2 {
+  font-size: clamp(56px, 7vw, 118px);
+}
+
+.locationDetails {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+
+.locationFacts {
+  margin-top: 70px;
+  border-top: 1px solid rgba(17, 17, 17, 0.18);
+}
+
+.locationFacts > div {
+  display: grid;
+  grid-template-columns: 55px 1fr;
+  align-items: center;
+  padding: 23px 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.18);
+}
+
+.locationFacts span {
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: rgba(17, 17, 17, 0.45);
+}
+
+.locationFacts p {
+  margin: 0;
+  font-size: 17px;
+}
+
+.timeline {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 10vw;
+  padding: 170px 7vw;
+}
+
+.timelineIntro {
+  position: sticky;
+  top: 140px;
+  align-self: start;
+}
+
+.timeline h2 {
+  font-size: clamp(50px, 5.6vw, 92px);
+}
+
+.timelineItems {
+  border-top: 1px solid rgba(17, 17, 17, 0.18);
+}
+
+.timelineItem {
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  gap: 20px;
+  padding: 35px 0 70px;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.18);
+}
+
+.timelineItem > span {
+  padding-top: 5px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  color: rgba(17, 17, 17, 0.42);
+}
+
+.timelineYear {
+  margin: 0 0 22px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.timelineItem h3 {
+  margin: 0 0 20px;
+  font-size: clamp(30px, 3vw, 48px);
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.timelineItem div > p:last-child {
+  max-width: 520px;
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.65;
+  color: rgba(17, 17, 17, 0.66);
+}
+
+.quote {
+  display: flex;
+  min-height: 76vh;
+  align-items: center;
+  justify-content: center;
+  padding: 120px 7vw;
+  background: #111;
+  color: #fff;
+  text-align: center;
+}
+
+.quote blockquote {
+  margin: 0;
+  font-size: clamp(52px, 7vw, 120px);
+  font-weight: 400;
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.cta {
+  padding: 160px 7vw 180px;
+  text-align: center;
+}
+
+.cta h2 {
+  font-size: clamp(58px, 7.5vw, 126px);
+}
+
+.ctaActions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 65px;
+}
+
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 28px;
+  border: 1px solid #111;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background-color 250ms ease,
+    color 250ms ease,
+    transform 250ms ease;
+}
+
+.primaryButton {
+  background: #111;
+  color: #fff;
+}
+
+.secondaryButton {
+  background: transparent;
+  color: #111;
+}
+
+.primaryButton:hover,
+.secondaryButton:hover {
+  transform: translateY(-2px);
+}
+
+.primaryButton:hover {
+  background: #2b2b2b;
+}
+
+.secondaryButton:hover {
+  background: #111;
+  color: #fff;
+}
+
+@media (max-width: 1000px) {
+  .hero {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    padding: 125px 20px 20px;
+  }
+
+  .heroCopy {
+    min-height: 560px;
+    padding: 70px 4vw;
+  }
+
+  .heroImage {
+    min-height: 72vh;
+  }
+
+  .manifestGrid,
+  .location,
+  .timeline {
+    grid-template-columns: 1fr;
+  }
+
+  .manifestGrid,
+  .location,
+  .timeline {
+    gap: 80px;
+  }
+
+  .threeHouses {
+    grid-template-columns: 1fr;
+  }
+
+  .sectionImage {
+    min-height: 70vh;
+  }
+
+  .timelineIntro {
+    position: static;
+  }
+}
+
+@media (max-width: 700px) {
+  .hero {
+    padding: 106px 12px 12px;
+    gap: 12px;
+  }
+
+  .heroCopy {
+    min-height: auto;
+    padding: 80px 12px 60px;
+  }
+
+  .hero h1,
+  .manifest h2,
+  .threeHouses h2,
+  .location h2,
+  .timeline h2,
+  .cta h2 {
+    font-size: clamp(43px, 13vw, 68px);
+  }
+
+  .heroImage {
+    min-height: 68vh;
+  }
+
+  .lead {
+    margin-top: 34px;
+  }
+
+  .manifest,
+  .location,
+  .timeline,
+  .cta {
+    padding: 105px 24px;
+  }
+
+  .manifestGrid,
+  .location,
+  .timeline {
+    gap: 55px;
+  }
+
+  .threeHouses {
+    min-height: auto;
+  }
+
+  .sectionImage {
+    min-height: 62vh;
+  }
+
+  .sectionCopy {
+    padding: 95px 24px;
+  }
+
+  .sectionCopy h2 {
+    margin-bottom: 40px;
+  }
+
+  .locationFacts {
+    margin-top: 50px;
+  }
+
+  .quote {
+    min-height: 72vh;
+    padding: 100px 24px;
+  }
+
+  .quote blockquote {
+    font-size: clamp(42px, 12vw, 66px);
+  }
+
+  .ctaActions {
+    flex-direction: column;
+    align-items: stretch;
+    margin-top: 48px;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+  }
+}

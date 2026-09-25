@@ -1,0 +1,177 @@
+export type PricingUnit =
+  | "per_stay"
+  | "per_night"
+  | "per_house_per_stay"
+  | "per_person_per_night"
+  | "per_quantity"
+  | "per_two_people_per_night";
+
+export type BookingSettings = {
+  currency: string;
+  base_price_per_house_per_night_cents: number;
+  min_nights: number;
+  max_adults_per_house: number;
+  houses_total: number;
+  is_booking_open: boolean;
+};
+
+export type BookingAddonVariant = {
+  id: string;
+  name_pl: string;
+  name_en: string;
+  description_pl?: string | null;
+  description_en?: string | null;
+  price_cents: number;
+  pricing_unit: PricingUnit;
+  is_active?: boolean;
+};
+
+export type BookingAddon = {
+  id: string;
+  slug: string;
+  name_pl: string;
+  name_en: string;
+  description_pl: string | null;
+  description_en: string | null;
+  price_cents: number;
+  pricing_unit: PricingUnit;
+  is_active: boolean;
+  sort_order: number;
+  variants?: BookingAddonVariant[] | null;
+  show_variant_prices?: boolean;
+  allow_day_selection?: boolean;
+  day_selection_label_pl?: string | null;
+  day_selection_label_en?: string | null;
+  counts_children?: boolean;
+};
+
+export type SelectedAddon = {
+  slug: string;
+  quantity: number;
+  variant_id?: string | null;
+  selected_dates?: string[];
+};
+
+export function getNights(checkin: string, checkout: string) {
+  if (!checkin || !checkout) return 0;
+
+  const start = new Date(`${checkin}T00:00:00`);
+  const end = new Date(`${checkout}T00:00:00`);
+
+  const diff = end.getTime() - start.getTime();
+  const nights = Math.round(diff / (1000 * 60 * 60 * 24));
+
+  return Math.max(0, nights);
+}
+
+export function getHousesNeeded(adults: number, maxAdultsPerHouse: number) {
+  return Math.ceil(Math.max(1, adults) / maxAdultsPerHouse);
+}
+
+export function calculateAddonTotal(input: {
+  addon: any;
+  variant?: any;
+  quantity: number;
+  selectedDatesCount?: number;
+  nights: number;
+  adults: number;
+  children: number;
+  housesCount: number;
+}) {
+  const {
+    addon,
+    variant,
+    quantity,
+    selectedDatesCount,
+    nights,
+    adults,
+    children,
+    housesCount,
+  } = input;
+
+  const unit = addon?.pricing_unit || "per_stay";
+  const priceCents = Number(variant?.price_cents ?? addon?.price_cents ?? 0);
+  const safeQuantity = Math.max(1, Number(quantity || 1));
+  const safeNights = Math.max(0, Number(nights || 0));
+  const selectedDays = Number(selectedDatesCount || 0);
+  const chargedNights = addon?.allow_day_selection
+    ? Math.max(0, selectedDays)
+    : safeNights;
+
+  const people = addon?.counts_children === false
+    ? Number(adults || 0)
+    : Number(adults || 0) + Number(children || 0);
+
+  const safePeople = Math.max(1, people);
+  const safeHousesCount = Math.max(1, Number(housesCount || 1));
+  const twoPeopleSets = Math.max(1, Math.ceil(safePeople / 2));
+
+  switch (unit) {
+    case "per_night":
+      return priceCents * chargedNights;
+
+    case "per_house_per_stay":
+      return priceCents * safeHousesCount;
+
+    case "per_person_per_night":
+      return priceCents * safePeople * chargedNights;
+
+    case "per_quantity":
+      return priceCents * safeQuantity * (addon?.allow_day_selection ? chargedNights : 1);
+
+    case "per_two_people_per_night":
+      return priceCents * twoPeopleSets * chargedNights;
+
+    case "per_stay":
+    default:
+      return priceCents;
+  }
+}: {
+  addon: BookingAddon;
+  variant?: BookingAddonVariant | null;
+  quantity: number;
+  nights: number;
+  adults: number;
+  children: number;
+  housesCount: number;
+  selectedDatesCount?: number;
+}) {
+  const safeQuantity = Math.max(1, quantity);
+  const selectedDays = Number(selectedDatesCount || 0);
+  const chargedNights = addon.allow_day_selection
+    ? Math.max(0, selectedDays)
+    : nights;
+  const people = addon.counts_children === false ? adults : adults + children;
+  const twoPeopleSets = Math.max(1, Math.ceil(Math.max(1, people) / 2));
+  const priceCents = Number(variant?.price_cents ?? addon.price_cents ?? 0);
+  const pricingUnit = variant?.pricing_unit || addon.pricing_unit;
+
+  switch (pricingUnit) {
+    case "per_night":
+      return priceCents * chargedNights * safeQuantity;
+
+    case "per_house_per_stay":
+      return priceCents * housesCount;
+
+    case "per_person_per_night":
+      return priceCents * people * chargedNights;
+
+    case "per_quantity":
+      return priceCents * safeQuantity * (addon.allow_day_selection ? chargedNights : 1);
+
+    case "per_two_people_per_night":
+      return priceCents * twoPeopleSets * chargedNights;
+
+    case "per_stay":
+    default:
+      return priceCents * safeQuantity;
+  }
+}
+
+export function formatMoney(cents: number, currency = "PLN") {
+  return new Intl.NumberFormat("pl-PL", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(cents / 100);
+}

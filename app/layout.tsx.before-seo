@@ -1,0 +1,50 @@
+import { TokamaCookieBanner } from "../components/tokama-site/TokamaCookieBanner";
+import type { Metadata } from "next";
+import { DM_Sans } from "next/font/google";
+import { SmoothScrollProvider } from "@/components/system/SmoothScrollProvider";
+import { ScrollRevealProvider } from "@/components/system/ScrollRevealProvider";
+import { TokamaGlobalHeader } from "@/components/tokama-site/TokamaGlobalHeader";
+import "./globals.css";
+
+const dmSans = DM_Sans({
+  variable: "--font-sans",
+  subsets: ["latin", "latin-ext"],
+  style: ["normal", "italic"],
+  display: "swap",
+});
+
+export const metadata: Metadata = {
+  metadataBase: new URL("https://tokama.pl"),
+  title: {
+    default: "Tokama — domki nad jeziorem",
+    template: "%s | Tokama",
+  },
+  description:
+    "Tokama to prywatne domki nad jeziorem w otoczeniu natury. Spokojny pobyt, sauna, śniadania, jezioro i przestrzeń do odpoczynku.",
+  openGraph: {
+    title: "Tokama — domki nad jeziorem",
+    description:
+      "Prywatne pobyty nad jeziorem, stworzone do długich poranków, spokojnych wieczorów i czasu blisko natury.",
+    siteName: "Tokama",
+    locale: "pl_PL",
+    type: "website",
+  },
+};
+
+export default function RootLayout({
+  children,
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
+  return (
+    <html lang="pl" className={dmSans.variable}>
+      <body>
+        <SmoothScrollProvider>
+          <TokamaGlobalHeader />
+          <ScrollRevealProvider>{children}</ScrollRevealProvider>
+        </SmoothScrollProvider>
+              <TokamaCookieBanner />
+      </body>
+    </html>
+  );
+}

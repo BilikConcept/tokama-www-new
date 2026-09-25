@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/tokama-cron/send-gate-codes",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/tokama-cron/sync-calendars",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}

@@ -1,0 +1,365 @@
+.page {
+  min-height: 100vh;
+  padding: 28px 22px 90px;
+  background: #ffffff;
+  color: #000000;
+  font-family: var(--font-sans), var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
+}
+
+.logo {
+  display: block;
+  width: fit-content;
+  margin: 0 auto 72px;
+  color: #000000;
+  text-decoration: none;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.24em;
+}
+
+.card {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 0.95fr 1.05fr;
+  gap: clamp(42px, 8vw, 110px);
+  align-items: start;
+}
+
+.summary {
+  padding-top: 10px;
+}
+
+.eyebrow {
+  margin: 0 0 18px;
+  color: rgba(0, 0, 0, 0.48);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.summary h1,
+.successCard h1 {
+  margin: 0;
+  max-width: 560px;
+  color: #000000;
+  font-family: var(--font-sans), var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
+  font-size: clamp(54px, 8vw, 104px);
+  font-weight: 500;
+  line-height: 0.9;
+  letter-spacing: -0.075em;
+}
+
+.summary h1 em {
+  display: block;
+  font-family: var(--font-serif), var(--font-dm-serif), "DM Serif Display", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.06em;
+}
+
+.meta {
+  margin-top: 52px;
+  display: grid;
+  gap: 0;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.meta div {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 18px;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.meta span {
+  color: rgba(0, 0, 0, 0.48);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.meta strong {
+  color: #000000;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.form {
+  padding-top: 10px;
+}
+
+.form button {
+  width: 100%;
+  min-height: 58px;
+  margin-top: 24px;
+  border: 0;
+  border-radius: 999px;
+  background: #000000;
+  color: #ffffff;
+  font-family: var(--font-sans), var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.form button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.note,
+.error,
+.successCard p {
+  margin: 18px 0 0;
+  max-width: 520px;
+  color: rgba(0, 0, 0, 0.56);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.error {
+  color: #9f1d1d;
+}
+
+
+
+
+.successScreen {
+  width: min(100%, 760px);
+  margin: 0 auto;
+  padding-top: 8px;
+  text-align: center;
+}
+
+.successScreen .successCard {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto;
+  display: block;
+  animation: successCardIn 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.successScreen .successMark {
+  position: relative;
+  width: 68px;
+  height: 68px;
+  margin: 0 auto 30px;
+  border: 1px solid #000000;
+  border-radius: 999px;
+  background: #ffffff;
+  animation: successMarkIn 720ms cubic-bezier(0.22, 1, 0.36, 1) 120ms both;
+}
+
+.successScreen .successMark span {
+  position: absolute;
+  left: 50%;
+  top: 48%;
+  width: 30px;
+  height: 16px;
+  border-left: 2px solid #000000;
+  border-bottom: 2px solid #000000;
+  transform: translate(-50%, -50%) rotate(-45deg) scaleX(0);
+  transform-origin: center;
+  animation: successCheckIn 520ms cubic-bezier(0.22, 1, 0.36, 1) 520ms forwards;
+}
+
+.successScreen h1 {
+  margin: 0 auto;
+  max-width: 660px;
+  color: #000000;
+  font-family: var(--font-sans), var(--font-dm-sans), "DM Sans", system-ui, sans-serif;
+  font-size: clamp(54px, 8vw, 96px);
+  font-weight: 500;
+  line-height: 0.9;
+  letter-spacing: -0.075em;
+}
+
+.successScreen h1 em {
+  display: block;
+  font-family: var(--font-serif), var(--font-dm-serif), "DM Serif Display", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.06em;
+}
+
+.successReservationCode {
+  width: fit-content;
+  margin: 30px auto 0;
+  padding: 14px 22px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.successReservationCode span {
+  display: block;
+  margin-bottom: 4px;
+  color: rgba(0, 0, 0, 0.48);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.successReservationCode strong {
+  color: #000000;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.successScreen p:not(.eyebrow) {
+  margin: 24px auto 0;
+  max-width: 540px;
+  color: rgba(0, 0, 0, 0.58);
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+@keyframes successCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes successMarkIn {
+  from {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes successCheckIn {
+  from {
+    transform: translate(-50%, -50%) rotate(-45deg) scaleX(0);
+  }
+
+  to {
+    transform: translate(-50%, -50%) rotate(-45deg) scaleX(1);
+  }
+}
+
+
+/* Mobile payment layout fix */
+.stripeMobileFix {
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+:global(#tokama-payment-element-wrap) {
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+:global(#payment-element) {
+  width: 100%;
+  min-width: 0;
+  overflow: visible;
+}
+
+:global(#payment-element iframe),
+:global(#tokama-payment-element-wrap iframe),
+:global(.StripeElement iframe) {
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+@media (max-width: 760px) {
+  .page,
+  .shell,
+  .container,
+  .paymentPage,
+  .paymentShell,
+  .paymentContainer,
+  .checkoutShell,
+  .checkoutContainer {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding-left: 18px;
+    padding-right: 18px;
+    overflow: visible;
+  }
+
+  .layout,
+  .grid,
+  .paymentLayout,
+  .paymentGrid,
+  .checkoutGrid,
+  .contentGrid {
+    display: flex;
+    flex-direction: column;
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    gap: 20px;
+    overflow: visible;
+  }
+
+  .summary,
+  .summaryCard,
+  .reservationSummary,
+  .orderSummary,
+  .sideCard,
+  .sidebar {
+    position: static;
+    top: auto;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    order: 1;
+  }
+
+  .payment,
+  .paymentCard,
+  .stripeCard,
+  .formCard,
+  .paymentForm,
+  .checkoutForm {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    order: 2;
+    overflow: visible;
+  }
+
+  .stripeMobileFix {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: visible;
+    padding-bottom: 8px;
+  }
+
+  :global(#payment-element),
+  :global(#tokama-payment-element-wrap),
+  :global(.StripeElement) {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow: visible;
+  }
+}

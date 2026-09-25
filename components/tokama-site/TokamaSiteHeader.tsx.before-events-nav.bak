@@ -1,0 +1,184 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import styles from "./TokamaSiteHeader.module.css";
+
+type Locale = "pl" | "en";
+
+const copy = {
+  pl: {
+    menu: "Menu",
+    close: "Zamknij",
+    book: "Rezerwuj",
+    contact: "Kontakt",
+    language: "EN",
+    privacy: "Polityka prywatności",
+    cookies: "Polityka cookie",
+    nav: ["Domki", "Relaks", "Eventy", "Kontakt"],
+  },
+  en: {
+    menu: "Menu",
+    close: "Close",
+    book: "Book",
+    contact: "Contact",
+    language: "PL",
+    privacy: "Privacy policy",
+    cookies: "Cookie policy",
+    nav: ["Cottages", "Relax", "Events", "Contact"],
+  },
+} as const;
+
+export function TokamaSiteHeader({
+  locale,
+  transparentOnHero = false,
+}: {
+  locale: Locale;
+  transparentOnHero?: boolean;
+}) {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isHero, setIsHero] = useState(transparentOnHero);
+  const t = copy[locale];
+  const homeHref = locale === "pl" ? "/" : "/en";
+  const bookHref = locale === "pl" ? "/rezerwacja" : "/en/book";
+  const cottageHref = locale === "pl" ? "/domki" : "/en/cottages";
+  const cottageLabel = locale === "pl" ? "Domki" : "Cottages";
+  const relaxHref = locale === "pl" ? "/relaks" : "/en/relax";
+  const relaxLabel = locale === "pl" ? "Relaks" : "Relax";
+
+  useEffect(() => {
+    document.body.style.overflow = menuOpen ? "hidden" : "";
+
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [menuOpen]);
+
+
+
+  useEffect(() => {
+    if (!transparentOnHero) {
+      setIsHero(false);
+      return;
+    }
+
+    const updateTheme = () => {
+      const headerHeight = document.querySelector("header")?.getBoundingClientRect().height || 0;
+      const darkSections = Array.from(
+        document.querySelectorAll("[data-tokama-dark-header]")
+      );
+
+      const isOverVideo = darkSections.some((section) => {
+        const bounds = section.getBoundingClientRect();
+        return bounds.top <= headerHeight && bounds.bottom > headerHeight;
+      });
+
+      setIsHero(isOverVideo);
+    };
+
+    updateTheme();
+    window.addEventListener("scroll", updateTheme, { passive: true });
+    window.addEventListener("resize", updateTheme);
+
+    return () => {
+      window.removeEventListener("scroll", updateTheme);
+      window.removeEventListener("resize", updateTheme);
+    };
+  }, [transparentOnHero]);
+  return (
+    <header
+        className={[
+          styles.header,
+          transparentOnHero ? styles.homeHeader : "",
+          isHero ? styles.headerHero : "",
+        ].filter(Boolean).join(" ")}
+      >
+      <div className={styles.headerTop}>
+        <button
+          type="button"
+          className={styles.menuButton}
+          onClick={() => setMenuOpen(true)}
+          aria-label={t.menu}
+        >
+          <span className={styles.menuLines} aria-hidden="true">
+            <span />
+            <span />
+          </span>
+          <span>{t.menu}</span>
+        </button>
+
+        <Link href={homeHref} className={styles.logoLink} aria-label="TOKAMA">
+          <Image
+            src="/tokama-logo.svg"
+            alt="TOKAMA"
+            width={172}
+            height={38}
+            priority
+            className={styles.logoImage}
+          />
+        </Link>
+
+        <Link href={bookHref} className={styles.bookButton}>
+          {t.book}
+        </Link>
+      </div>
+
+      <nav className={styles.headerNav} aria-label="TOKAMA">
+        {t.nav.map((item) => {
+          const href =
+            item === cottageLabel
+              ? cottageHref
+              : item === relaxLabel
+                ? relaxHref
+                : null;
+
+          return href ? (
+            <Link key={item} href={href} className={styles.headerNavLink}>
+              {item}
+            </Link>
+          ) : (
+            <span key={item}>{item}</span>
+          );
+        })}
+      </nav>
+
+      {menuOpen ? (
+        <div className={styles.menuOverlay}>
+          <div className={styles.menuOverlayTop}>
+            <button
+              type="button"
+              className={styles.menuClose}
+              onClick={() => setMenuOpen(false)}
+            >
+              {t.close}
+            </button>
+
+            <Link href={bookHref} onClick={() => setMenuOpen(false)}>
+              {t.book}
+            </Link>
+          </div>
+
+          <div className={styles.menuOverlayLinks}>
+            <Link href={bookHref} onClick={() => setMenuOpen(false)}>
+              {t.book}
+            </Link>
+            <a href="mailto:kontakt@tokama.pl">{t.contact}</a>
+            <Link href={locale === "pl" ? "/en" : "/"} onClick={() => setMenuOpen(false)}>
+              {t.language}
+            </Link>
+
+            <div className={styles.menuLegalLinks}>
+              <Link href="/polityka-prywatnosci" onClick={() => setMenuOpen(false)}>
+                {t.privacy}
+              </Link>
+              <Link href="/polityka-cookie" onClick={() => setMenuOpen(false)}>
+                {t.cookies}
+              </Link>
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </header>
+  );
+}

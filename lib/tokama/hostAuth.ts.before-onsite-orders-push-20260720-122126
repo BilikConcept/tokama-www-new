@@ -1,0 +1,56 @@
+import { NextResponse } from "next/server";
+
+const COOKIE_NAME = "tokama_host_session";
+
+export function getHostSessionSecret() {
+  return process.env.TOKAMA_HOST_SESSION_SECRET || process.env.TOKAMA_HOST_PASSWORD || "tokama-local-session";
+}
+
+export function isHostRequest(request: Request) {
+  const cookieHeader = request.headers.get("cookie") || "";
+  const sessionSecret = getHostSessionSecret();
+
+  return cookieHeader
+    .split(";")
+    .map((item) => item.trim())
+    .some((item) => item === `${COOKIE_NAME}=${sessionSecret}`);
+}
+
+export function unauthorizedResponse() {
+  return NextResponse.json(
+    {
+      ok: false,
+      message: "Unauthorized.",
+    },
+    { status: 401 }
+  );
+}
+
+export function createHostCookieResponse(data: unknown) {
+  const response = NextResponse.json(data);
+  const sessionSecret = getHostSessionSecret();
+
+  response.cookies.set(COOKIE_NAME, sessionSecret, {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+
+  return response;
+}
+
+export function clearHostCookieResponse(data: unknown) {
+  const response = NextResponse.json(data);
+
+  response.cookies.set(COOKIE_NAME, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+  });
+
+  return response;
+}

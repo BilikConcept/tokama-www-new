@@ -1,0 +1,15 @@
+import type { Metadata } from "next";
+import { TokamaRelaxPage } from "@/components/tokama-relax/TokamaRelaxPage";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/relaks",
+  },
+
+  title: "Strefa relaksu | TOKAMA",
+  description: "Basen, jacuzzi i sauna w strefie relaksu TOKAMA w Windykach koło Iławy.",
+};
+
+export default function RelaxPage() {
+  return <TokamaRelaxPage locale="pl" />;
+}

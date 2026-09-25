@@ -1,0 +1,11 @@
+import type { Metadata } from "next";
+import { TokamaCottagesPage } from "@/components/tokama-cottages/TokamaCottagesPage";
+
+export const metadata: Metadata = {
+  title: "Domki całoroczne nad jeziorem | TOKAMA",
+  description: "Trzy całoroczne domki TOKAMA w Windykach, blisko Iławy i jeziora Łabędź.",
+};
+
+export default function CottagesPage() {
+  return <TokamaCottagesPage locale="pl" />;
+}

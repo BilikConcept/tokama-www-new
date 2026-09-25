@@ -1,0 +1,705 @@
+import { NextResponse } from "next/server";
+import { sendTokamaHostPush } from "@/lib/tokamaPush";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
+import { sendTokamaEmail } from "@/lib/tokamaNotifications";
+
+type RequestBody = {
+  locale: "pl" | "en";
+  checkin: string;
+  checkout: string;
+  adults: number;
+  children: number;
+  guest_name: string;
+  guest_email: string;
+  guest_phone: string;
+  guest_message?: string;
+  addons: {
+    slug: string;
+    quantity: number;
+    variant_id?: string | null;
+    selected_dates?: string[];
+  }[];
+};
+
+function getNights(checkin: string, checkout: string) {
+  const start = new Date(`${checkin}T00:00:00`);
+  const end = new Date(`${checkout}T00:00:00`);
+
+  const diff = end.getTime() - start.getTime();
+  return Math.max(0, Math.round(diff / 86400000));
+}
+
+function getHousesNeeded(adults: number, maxAdultsPerHouse: number) {
+  return Math.ceil(adults / maxAdultsPerHouse);
+}
+
+function formatDate(value: string) {
+  const [year, month, day] = value.split("-");
+  return `${day}.${month}.${year}`;
+}
+
+function formatMoney(cents: number, currency = "PLN") {
+  return new Intl.NumberFormat("pl-PL", {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  }).format(cents / 100);
+}
+
+function calculateAddonTotal(input: {
+  addon: any;
+  quantity: number;
+  nights: number;
+  adults: number;
+  children: number;
+  housesCount: number;
+}) {
+  const { addon, quantity, nights, adults, children, housesCount } = input;
+  const price = Number(addon.price_cents || 0);
+  const unit = addon.pricing_unit;
+
+  if (unit === "per_night") return price * quantity * nights;
+  if (unit === "per_adult") return price * quantity * adults;
+  if (unit === "per_child") return price * quantity * children;
+  if (unit === "per_guest") return price * quantity * (adults + children);
+  if (unit === "per_person") return price * quantity * (adults + children);
+  if (unit === "per_house") return price * quantity * housesCount;
+  if (unit === "per_house_per_night") return price * quantity * housesCount * nights;
+
+  return price * quantity;
+}
+
+function buildGuestEmail(input: {
+  locale: "pl" | "en";
+  guestName: string;
+  checkin: string;
+  checkout: string;
+  adults: number;
+  children: number;
+  housesCount: number;
+  total: string;
+}) {
+  const isEnglish = input.locale === "en";
+
+  const subject = isEnglish
+    ? "TOKAMA — reservation request received"
+    : "TOKAMA — otrzymaliśmy Twoją rezerwację";
+
+  const intro = isEnglish
+    ? "Thank you. We have received your reservation request. The host will verify availability and contact you with the next step."
+    : "Dziękujemy. Otrzymaliśmy Twoją prośbę o rezerwację. Host zweryfikuje dostępność i skontaktuje się z Tobą z kolejnym krokiem.";
+
+  const html = `
+    <div style="font-family: Arial, sans-serif; color: #000; line-height: 1.55;">
+      <h1 style="font-size: 28px; font-weight: 500;">TOKAMA</h1>
+      <p>${intro}</p>
+
+      <hr style="border: 0; border-top: 1px solid #ddd; margin: 24px 0;" />
+
+      <p><strong>${isEnglish ? "Guest" : "Gość"}:</strong> ${input.guestName}</p>
+      <p><strong>${isEnglish ? "Stay" : "Pobyt"}:</strong> ${formatDate(input.checkin)} — ${formatDate(input.checkout)}</p>
+      <p><strong>${isEnglish ? "Adults" : "Dorośli"}:</strong> ${input.adults}</p>
+      <p><strong>${isEnglish ? "Children" : "Dzieci"}:</strong> ${input.children}</p>
+      <p><strong>${isEnglish ? "Houses" : "Domki"}:</strong> ${input.housesCount}</p>
+      <p><strong>${isEnglish ? "Estimated total" : "Szacunkowa suma"}:</strong> ${input.total}</p>
+
+      <hr style="border: 0; border-top: 1px solid #ddd; margin: 24px 0;" />
+
+      <p style="color: #666;">
+        ${isEnglish
+          ? "Payment is not required yet. You will receive details after the host accepts your reservation."
+          : "Płatność nie jest jeszcze wymagana. Szczegóły otrzymasz po akceptacji rezerwacji przez hosta."}
+      </p>
+    </div>
+  `;
+
+  const text = `${intro}
+
+${isEnglish ? "Guest" : "Gość"}: ${input.guestName}
+${isEnglish ? "Stay" : "Pobyt"}: ${formatDate(input.checkin)} — ${formatDate(input.checkout)}
+${isEnglish ? "Adults" : "Dorośli"}: ${input.adults}
+${isEnglish ? "Children" : "Dzieci"}: ${input.children}
+${isEnglish ? "Houses" : "Domki"}: ${input.housesCount}
+${isEnglish ? "Estimated total" : "Szacunkowa suma"}: ${input.total}
+`;
+
+  return { subject, html, text };
+}
+
+function buildHostEmail(input: {
+  guestName: string;
+  guestEmail: string;
+  guestPhone: string;
+  checkin: string;
+  checkout: string;
+  adults: number;
+  children: number;
+  housesCount: number;
+  total: string;
+}) {
+  return {
+    subject: "TOKAMA — nowa rezerwacja",
+    html: `
+      <div style="font-family: Arial, sans-serif; color: #000; line-height: 1.55;">
+        <h1 style="font-size: 28px; font-weight: 500;">Nowa rezerwacja TOKAMA</h1>
+
+        <p><strong>Gość:</strong> ${input.guestName}</p>
+        <p><strong>Email:</strong> ${input.guestEmail}</p>
+        <p><strong>Telefon:</strong> ${input.guestPhone}</p>
+        <p><strong>Pobyt:</strong> ${formatDate(input.checkin)} — ${formatDate(input.checkout)}</p>
+        <p><strong>Dorośli:</strong> ${input.adults}</p>
+        <p><strong>Dzieci:</strong> ${input.children}</p>
+        <p><strong>Domki:</strong> ${input.housesCount}</p>
+        <p><strong>Szacunkowa suma:</strong> ${input.total}</p>
+      </div>
+    `,
+    text: `Nowa rezerwacja TOKAMA
+
+Gość: ${input.guestName}
+Email: ${input.guestEmail}
+Telefon: ${input.guestPhone}
+Pobyt: ${formatDate(input.checkin)} — ${formatDate(input.checkout)}
+Dorośli: ${input.adults}
+Dzieci: ${input.children}
+Domki: ${input.housesCount}
+Szacunkowa suma: ${input.total}
+`,
+  };
+}
+
+
+function addDays(date: Date, days: number) {
+  const nextDate = new Date(date);
+  nextDate.setDate(nextDate.getDate() + days);
+
+  return nextDate;
+}
+
+function toDateInputValue(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+async function findSuggestedAvailableDates(input: {
+  supabase: any;
+  requestedCheckin: string;
+  nights: number;
+  housesCount: number;
+  activeReservationStatuses: string[];
+  allHouses: any[];
+}) {
+  const suggestions: {
+    checkin: string;
+    checkout: string;
+  }[] = [];
+
+  const requestedStart = new Date(`${input.requestedCheckin}T00:00:00`);
+
+  for (let offset = 1; offset <= 90; offset += 1) {
+    if (suggestions.length >= 3) break;
+
+    const checkinDate = addDays(requestedStart, offset);
+    const checkoutDate = addDays(checkinDate, input.nights);
+
+    const checkin = toDateInputValue(checkinDate);
+    const checkout = toDateInputValue(checkoutDate);
+
+    const { data: overlappingReservations, error: overlappingError } =
+      await input.supabase
+        .from("tokama_reservations")
+        .select("id")
+        .lt("checkin", checkout)
+        .gt("checkout", checkin)
+        .in("status", input.activeReservationStatuses);
+
+    if (overlappingError) {
+      continue;
+    }
+
+    const overlappingReservationIds =
+      overlappingReservations?.map((item: any) => item.id) || [];
+
+    const reservedHouseIds = new Set<string>();
+
+    if (overlappingReservationIds.length) {
+      const { data: reservedHouses, error: reservedHousesError } =
+        await input.supabase
+          .from("tokama_reservation_houses")
+          .select("house_id")
+          .in("reservation_id", overlappingReservationIds);
+
+      if (reservedHousesError) {
+        continue;
+      }
+
+      for (const item of reservedHouses || []) {
+        if (item.house_id) {
+          reservedHouseIds.add(item.house_id);
+        }
+      }
+    }
+
+        const manualBlockedHouseCodesForSuggestion =
+      await getManuallyBlockedHouseCodes(input.supabase, checkin, checkout);
+
+    manualBlockedHouseCodesForSuggestion.forEach((houseCode) =>
+      reservedHouseIds.add(houseCode)
+    );
+
+const availableHousesCount = input.allHouses.filter(
+      (house: any) => !reservedHouseIds.has(house.id)
+    ).length;
+
+    if (availableHousesCount >= input.housesCount) {
+      suggestions.push({
+        checkin,
+        checkout,
+      });
+    }
+  }
+
+  return suggestions;
+}
+
+
+
+async function getManuallyBlockedHouseCodes(
+  supabase: any,
+  checkin: string,
+  checkout: string
+) {
+  const { data: blocks, error } = await supabase
+    .from("tokama_house_date_blocks")
+    .select("house_id, house_code")
+    .lt("start_date", checkout)
+    .gt("end_date", checkin);
+
+  if (error) {
+    throw new Error(`Could not read manual date blocks: ${error.message}`);
+  }
+
+  const blockedKeys = new Set<string>();
+  const blockedCodes = new Set<string>();
+
+  (blocks || []).forEach((block: any) => {
+    const houseId = String(block.house_id || "").trim();
+    const houseCode = String(block.house_code || "").trim().toUpperCase();
+
+    if (houseId) blockedKeys.add(houseId);
+    if (houseCode) {
+      blockedKeys.add(houseCode);
+      blockedCodes.add(houseCode);
+    }
+  });
+
+  if (blockedCodes.size > 0) {
+    const { data: houses, error: housesError } = await supabase
+      .from("tokama_houses")
+      .select("id, code")
+      .in("code", Array.from(blockedCodes));
+
+    if (housesError) {
+      throw new Error(`Could not resolve blocked houses: ${housesError.message}`);
+    }
+
+    (houses || []).forEach((house: any) => {
+      const houseId = String(house.id || "").trim();
+      const houseCode = String(house.code || "").trim().toUpperCase();
+
+      if (houseId) blockedKeys.add(houseId);
+      if (houseCode) blockedKeys.add(houseCode);
+    });
+  }
+
+  return blockedKeys;
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = (await request.json()) as RequestBody;
+
+    const supabase = getSupabaseAdmin();
+
+    const [{ data: settings }, { data: addons }] = await Promise.all([
+      supabase
+        .from("tokama_booking_settings")
+        .select("*")
+        .eq("id", true)
+        .single(),
+      supabase
+        .from("tokama_addons")
+        .select("*")
+        .eq("is_active", true),
+    ]);
+
+    if (!settings) {
+      return NextResponse.json(
+        { ok: false, message: "Booking settings not found." },
+        { status: 500 }
+      );
+    }
+
+    const nights = getNights(body.checkin, body.checkout);
+    const adults = Math.max(1, Number(body.adults || 1));
+    const children = Math.max(0, Number(body.children || 0));
+
+    const maxAdultsPerHouse = Number(settings.max_adults_per_house || 7);
+    const housesTotal = Number(settings.houses_total || 3);
+    const minNights = Number(settings.min_nights || 2);
+    const currency = settings.currency || "PLN";
+
+    const basePrice =
+      Number(settings.base_price_per_house_per_night_cents) ||
+      Number(settings.base_price_per_house_night_cents) ||
+      120000;
+
+    const housesCount = getHousesNeeded(adults, maxAdultsPerHouse);
+
+    if (housesCount > housesTotal) {
+      return NextResponse.json(
+        { ok: false, message: "Too many adult guests for available houses." },
+        { status: 400 }
+      );
+    }
+
+    if (nights < minNights) {
+      return NextResponse.json(
+        { ok: false, message: "Stay is shorter than minimum nights." },
+        { status: 400 }
+      );
+    }
+
+    const stayPrice = nights * housesCount * basePrice;
+
+    const activeReservationStatuses = [
+      "requested",
+      "approved",
+      "payment_sent",
+      "paid",
+      "confirmed",
+    ];
+
+    const { data: overlappingReservations, error: overlappingError } = await supabase
+      .from("tokama_reservations")
+      .select("id")
+      .lt("checkin", body.checkout)
+      .gt("checkout", body.checkin)
+      .in("status", activeReservationStatuses);
+
+    if (overlappingError) {
+      return NextResponse.json(
+        { ok: false, message: overlappingError.message },
+        { status: 500 }
+      );
+    }
+
+    const overlappingReservationIds =
+      overlappingReservations?.map((item: any) => item.id) || [];
+
+    const reservedHouseIds = new Set<string>();
+
+    if (overlappingReservationIds.length) {
+      const { data: reservedHouses, error: reservedHousesError } = await supabase
+        .from("tokama_reservation_houses")
+        .select("house_id")
+        .in("reservation_id", overlappingReservationIds);
+
+      if (reservedHousesError) {
+        return NextResponse.json(
+          { ok: false, message: reservedHousesError.message },
+          { status: 500 }
+        );
+      }
+
+      for (const item of reservedHouses || []) {
+        if (item.house_id) {
+          reservedHouseIds.add(item.house_id);
+        }
+      }
+    }
+
+    const { data: allHouses, error: allHousesError } = await supabase
+      .from("tokama_houses")
+      .select("id, code, name, sort_order")
+      .order("sort_order", { ascending: true });
+
+    if (allHousesError || !allHouses) {
+      return NextResponse.json(
+        { ok: false, message: allHousesError?.message || "Houses not found." },
+        { status: 500 }
+      );
+    }
+
+        const manualBlockedHouseCodesForRequestedDates =
+      await getManuallyBlockedHouseCodes(supabase, body.checkin, body.checkout);
+
+    manualBlockedHouseCodesForRequestedDates.forEach((houseCode) =>
+      reservedHouseIds.add(houseCode)
+    );
+
+let availableHouses = allHouses
+      .filter((house: any) => !reservedHouseIds.has(house.id))
+      .slice(0, housesCount);
+
+    const manualBlockedHouseKeysForRequestedDates =
+      await getManuallyBlockedHouseCodes(supabase, body.checkin, body.checkout);
+
+    availableHouses = availableHouses.filter((house: any) => {
+      const houseId = String(house.id || "").trim();
+      const houseCode = String(house.code || "").trim().toUpperCase();
+
+      return (
+        !manualBlockedHouseKeysForRequestedDates.has(houseId) &&
+        !manualBlockedHouseKeysForRequestedDates.has(houseCode)
+      );
+    });
+
+    if (availableHouses.length < housesCount) {
+      const suggestions = await findSuggestedAvailableDates({
+        supabase,
+        requestedCheckin: body.checkin,
+        nights,
+        housesCount,
+        activeReservationStatuses,
+        allHouses,
+      });
+
+      return NextResponse.json(
+        {
+          ok: false,
+          code: "NO_AVAILABLE_HOUSES",
+          message:
+            "Brak dostępnych domków w wybranym terminie. Sprawdź sugerowane wolne terminy.",
+          suggestions,
+        },
+        { status: 409 }
+      );
+    }
+
+    const selectedAddons = body.addons || [];
+    const availableAddons = addons || [];
+
+    const addonRows = selectedAddons
+      .map((selected) => {
+        const addon = availableAddons.find((item: any) => item.slug === selected.slug);
+        if (!addon) return null;
+
+        const variants = Array.isArray(addon.variants)
+          ? addon.variants.filter((variant: any) => variant.is_active !== false)
+          : [];
+        const selectedVariantId = String(selected.variant_id || "").trim();
+        const variant =
+          variants.find((item: any) => String(item.id) === selectedVariantId) ||
+          variants[0] ||
+          null;
+
+        const quantity = Math.max(1, Number(selected.quantity || 1));
+        const selectedDates = Array.isArray(selected.selected_dates)
+          ? selected.selected_dates.filter((date: any) =>
+              /^\d{4}-\d{2}-\d{2}$/.test(String(date || ""))
+            )
+          : [];
+
+        const total = calculateAddonTotal({
+          addon,
+          variant,
+          quantity,
+          nights,
+          adults,
+          children,
+          housesCount,
+          selectedDatesCount: selectedDates.length,
+        });
+
+        return {
+          addon,
+          variant,
+          quantity,
+          selectedDates,
+          total,
+        };
+      })
+      .filter(Boolean) as {
+      addon: any;
+      variant: any | null;
+      quantity: number;
+      selectedDates: string[];
+      total: number;
+    }[];
+
+    const addonsPrice = addonRows.reduce((sum, row) => sum + row.total, 0);
+    const totalEstimated = stayPrice + addonsPrice;
+
+    const { data: reservation, error: reservationError } = await supabase
+      .from("tokama_reservations")
+      .insert({
+        source: "website",
+        status: "requested",
+        locale: body.locale || "pl",
+        checkin: body.checkin,
+        checkout: body.checkout,
+        nights,
+        adults,
+        children,
+        houses_count: housesCount,
+        guest_name: body.guest_name,
+        guest_email: body.guest_email,
+        guest_phone: body.guest_phone,
+        guest_message: body.guest_message || null,
+        currency,
+        stay_price_cents: stayPrice,
+        addons_price_cents: addonsPrice,
+        total_estimated_cents: totalEstimated,
+        min_nights_at_booking: minNights,
+        base_price_per_house_per_night_cents_at_booking: basePrice,
+      })
+      .select("*")
+      .single();
+
+    if (reservationError || !reservation) {
+      return NextResponse.json(
+        { ok: false, message: reservationError?.message || "Reservation failed." },
+        { status: 500 }
+      );
+    }
+
+    if (availableHouses.length) {
+      const { error: reservationHousesError } = await supabase
+        .from("tokama_reservation_houses")
+        .insert(
+          availableHouses.map((house: any) => ({
+            reservation_id: reservation.id,
+            house_id: house.id,
+          }))
+        );
+
+      if (reservationHousesError) {
+        return NextResponse.json(
+          { ok: false, message: reservationHousesError.message },
+          { status: 500 }
+        );
+      }
+    }
+
+    if (addonRows.length) {
+      const rows = addonRows.map((row) => ({
+        reservation_id: reservation.id,
+        addon_id: row.addon.id,
+        addon_slug: row.addon.slug,
+        name_pl: row.addon.name_pl,
+        name_en: row.addon.name_en,
+        variant_id: row.variant?.id || null,
+        variant_name_pl: row.variant?.name_pl || null,
+        variant_name_en: row.variant?.name_en || null,
+        pricing_unit: row.variant?.pricing_unit || row.addon.pricing_unit,
+        quantity: row.quantity,
+        selected_dates: row.selectedDates || [],
+        unit_price_cents: Number(row.variant?.price_cents ?? row.addon.price_cents ?? 0),
+        total_price_cents: row.total,
+      }));
+
+      const { error: addonError } = await supabase
+        .from("tokama_reservation_addons")
+        .insert(rows);
+
+      if (addonError) {
+        return NextResponse.json(
+          { ok: false, message: addonError.message },
+          { status: 500 }
+        );
+      }
+    }
+
+    try {
+      await sendTokamaHostPush({
+        title: "Nowa rezerwacja TOKAMA",
+        body: `${body.guest_name || "Gość"} · ${formatDate(body.checkin)} — ${formatDate(body.checkout)}`,
+        data: {
+          type: "new_reservation",
+          reservation_id: reservation.id,
+          public_code: reservation.public_code,
+        },
+      });
+    } catch (pushError) {
+      console.log("[TOKAMA PUSH] New reservation push failed", pushError);
+    }
+
+    let emailSent = false;
+    let emailErrorMessage: string | null = null;
+
+    try {
+      const totalFormatted = formatMoney(totalEstimated, currency);
+
+      const guestEmail = buildGuestEmail({
+        locale: body.locale || "pl",
+        guestName: body.guest_name,
+        checkin: body.checkin,
+        checkout: body.checkout,
+        adults,
+        children,
+        housesCount,
+        total: totalFormatted,
+      });
+
+      const hostEmail = buildHostEmail({
+        guestName: body.guest_name,
+        guestEmail: body.guest_email,
+        guestPhone: body.guest_phone,
+        checkin: body.checkin,
+        checkout: body.checkout,
+        adults,
+        children,
+        housesCount,
+        total: totalFormatted,
+      });
+
+      const emails = [
+        sendTokamaEmail({
+          to: body.guest_email,
+          subject: guestEmail.subject,
+          html: guestEmail.html,
+          text: guestEmail.text,
+        }),
+      ];
+
+      if (process.env.TOKAMA_HOST_EMAIL) {
+        emails.push(
+          sendTokamaEmail({
+            to: process.env.TOKAMA_HOST_EMAIL,
+            subject: hostEmail.subject,
+            html: hostEmail.html,
+            text: hostEmail.text,
+          })
+        );
+      }
+
+      await Promise.all(emails);
+
+      emailSent = true;
+
+      await supabase
+        .from("tokama_reservations")
+        .update({ booking_email_sent_at: new Date().toISOString() })
+        .eq("id", reservation.id);
+    } catch (emailError) {
+      emailErrorMessage =
+        emailError instanceof Error ? emailError.message : "Unknown email error.";
+
+      console.error("TOKAMA booking email failed:", emailError);
+    }
+
+    return NextResponse.json({
+      ok: true,
+      reservation,
+      emailSent,
+      emailError: emailErrorMessage,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message: error instanceof Error ? error.message : "Unknown error.",
+      },
+      { status: 500 }
+    );
+  }
+}

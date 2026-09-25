@@ -1,0 +1,164 @@
+.page {
+  color: #111;
+  background: #fff;
+}
+
+.intro,
+.location {
+  display: grid;
+  place-items: center;
+  padding: clamp(130px, 11vw, 230px) 24px;
+  text-align: center;
+}
+
+.introContent,
+.locationContent {
+  display: grid;
+  justify-items: center;
+  width: min(100%, 720px);
+}
+
+.intro h1,
+.details h2,
+.location h2 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: clamp(28px, calc(23.38px + 1.233vw), 36px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.intro h1 em,
+.details h2 em,
+.location h2 em {
+  font-style: italic;
+}
+
+.intro p,
+.location p {
+  margin: 22px 0 0;
+  max-width: 36rem;
+  color: rgba(17, 17, 17, 0.72);
+  font-size: clamp(14px, calc(12.84px + 0.308vw), 16px);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.details {
+  padding: clamp(110px, 13vw, 174px) 24px;
+  color: #111;
+  background: #fff;
+}
+
+.detailsInner {
+  width: min(100%, 1120px);
+  margin: 0 auto;
+}
+
+.details h2 {
+  max-width: 680px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.detailList {
+  margin-top: clamp(58px, 7vw, 88px);
+  border-top: 1px solid rgba(17, 17, 17, 0.25);
+}
+
+.detail {
+  display: grid;
+  grid-template-columns: 100px minmax(140px, 0.6fr) 1.4fr;
+  gap: 20px;
+  align-items: center;
+  padding: 28px 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.25);
+  color: #111;
+  text-decoration: none;
+}
+
+.detail > span:first-child {
+  color: rgba(17, 17, 17, 0.52);
+  font-size: 12px;
+}
+
+.detail > span:nth-child(2) {
+  color: rgba(17, 17, 17, 0.62);
+  font-size: 14px;
+}
+
+.detail strong {
+  font-size: 17px;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.detail i {
+  display: inline-block;
+  margin-left: 8px;
+  font-style: normal;
+  transition: transform 220ms ease;
+}
+
+.detail:hover i,
+.mapLink:hover span {
+  transform: translate(3px, -3px);
+}
+
+.location {
+  min-height: min(68svh, 680px);
+}
+
+.mapLink {
+  display: inline-flex;
+  gap: 12px;
+  margin-top: 34px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #111;
+  color: #111;
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.mapLink span {
+  transition: transform 220ms ease;
+}
+
+.homeLink {
+  margin-top: 62px;
+  color: #111;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-decoration: none;
+}
+
+.homeLink:hover {
+  text-decoration: underline;
+  text-underline-offset: 5px;
+}
+
+@media (max-width: 760px) {
+  .intro,
+  .location,
+  .details {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .intro,
+  .location {
+    padding-top: 112px;
+    padding-bottom: 112px;
+  }
+
+  .detail {
+    grid-template-columns: 48px 1fr;
+    gap: 10px;
+  }
+
+  .detail strong {
+    grid-column: 2;
+    font-size: 16px;
+  }
+}

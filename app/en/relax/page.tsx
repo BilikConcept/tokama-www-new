@@ -1,0 +1,15 @@
+import type { Metadata } from "next";
+import { TokamaRelaxPage } from "@/components/tokama-relax/TokamaRelaxPage";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/en/relax",
+  },
+
+  title: "Relaxation area | TOKAMA",
+  description: "Pool, hot tub and sauna at TOKAMA in Windyki near Iława.",
+};
+
+export default function EnglishRelaxPage() {
+  return <TokamaRelaxPage locale="en" />;
+}

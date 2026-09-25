@@ -1,0 +1,218 @@
+.backdrop {
+  position: fixed;
+  z-index: 10000;
+  inset: 0;
+  display: grid;
+  justify-items: center;
+  overflow-y: auto;
+  padding: 22px;
+  background: rgba(0, 0, 0, 0.32);
+  animation: backdropIn 260ms ease both;
+}
+
+.panel {
+  width: min(100%, 860px);
+  margin-bottom: auto;
+  padding: clamp(72px, 7vw, 88px) clamp(24px, 5vw, 64px) clamp(32px, 5vw, 54px);
+  border: 1px solid #111;
+  color: #111;
+  background: #fff;
+  box-sizing: border-box;
+  animation: panelIn 700ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.closeButton {
+  position: absolute;
+  top: 22px;
+  right: 22px;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid #111;
+  background: #fff;
+  cursor: pointer;
+}
+
+.closeButton span {
+  position: absolute;
+  width: 16px;
+  height: 1px;
+  background: #111;
+}
+
+.closeButton span:first-child {
+  transform: rotate(45deg);
+}
+
+.closeButton span:last-child {
+  transform: rotate(-45deg);
+}
+
+.intro {
+  max-width: 600px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.intro h2 {
+  margin: 0;
+  font-family: Georgia, serif;
+  font-size: clamp(28px, calc(23.38px + 1.233vw), 36px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.intro h2 em {
+  font-style: italic;
+}
+
+.intro p {
+  margin: 20px auto 0;
+  max-width: 36rem;
+  font-size: clamp(14px, calc(12.84px + 0.308vw), 16px);
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 28px 22px;
+  margin-top: clamp(50px, 6vw, 70px);
+}
+
+.field {
+  display: grid;
+  gap: 10px;
+}
+
+.field span {
+  color: rgba(17, 17, 17, 0.62);
+  font-size: 12px;
+}
+
+.field input,
+.field select,
+.field textarea {
+  width: 100%;
+  padding: 0 0 12px;
+  border: 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.42);
+  border-radius: 0;
+  color: #111;
+  background: #fff;
+  font: inherit;
+  font-size: 15px;
+  outline: 0;
+  box-sizing: border-box;
+}
+
+.field textarea {
+  min-height: 112px;
+  resize: vertical;
+}
+
+.field input:focus,
+.field select:focus,
+.field textarea:focus {
+  border-color: #111;
+}
+
+.fullWidth {
+  grid-column: 1 / -1;
+}
+
+.formFooter {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 18px;
+  margin-top: 8px;
+}
+
+.formFooter button {
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 24px;
+  border: 1px solid #111;
+  color: #fff;
+  background: #111;
+  font: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 220ms ease, background 220ms ease;
+}
+
+.formFooter button:hover:not(:disabled) {
+  color: #111;
+  background: #fff;
+}
+
+.formFooter button:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.formFooter p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.success {
+  color: #285e37;
+}
+
+.error {
+  color: #a32929;
+}
+
+.honeypot {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes panelIn {
+  from {
+    opacity: 0;
+    transform: translateY(-120%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 700px) {
+  .backdrop {
+    padding: 12px;
+  }
+
+  .panel {
+    padding: 70px 22px 30px;
+  }
+
+  .closeButton {
+    top: 14px;
+    right: 14px;
+  }
+
+  .form {
+    grid-template-columns: 1fr;
+  }
+
+  .fullWidth {
+    grid-column: auto;
+  }
+}

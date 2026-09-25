@@ -1,0 +1,802 @@
+.page {
+  min-height: 100svh;
+  padding:
+    calc(var(--tokama-header-height, 150px) + clamp(68px, 7vw, 112px))
+    clamp(24px, 7vw, 112px)
+    clamp(88px, 10vw, 150px);
+  color: #111111;
+  background: #ffffff;
+  font-family: system-ui, sans-serif;
+}
+
+.card {
+  width: min(100%, 1380px);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(280px, 0.76fr) minmax(520px, 1.24fr);
+  gap: clamp(54px, 8vw, 140px);
+  align-items: start;
+}
+
+.summary {
+  position: sticky;
+  top: calc(var(--tokama-header-height, 150px) + 48px);
+}
+
+.eyebrow,
+.sectionLabel {
+  margin: 0;
+  color: rgba(17, 17, 17, 0.52);
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.summary .eyebrow {
+  margin-bottom: 26px;
+}
+
+.summary h1,
+.successCard h1 {
+  max-width: 560px;
+  margin: 0;
+  color: #111111;
+  font-family: Georgia, serif;
+  font-size: clamp(38px, 4.4vw, 64px);
+  font-weight: 400;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.summary h1 em,
+.successCard h1 em {
+  font-weight: 400;
+  letter-spacing: -0.04em;
+}
+
+.intro {
+  max-width: 36rem;
+  margin: 24px 0 0;
+  color: rgba(17, 17, 17, 0.72);
+  font-size: clamp(14px, calc(12.84px + 0.308vw), 16px);
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+}
+
+.meta {
+  margin-top: 42px;
+  border-top: 1px solid #111111;
+}
+
+.meta div {
+  display: grid;
+  grid-template-columns: 116px minmax(0, 1fr);
+  gap: 18px;
+  padding: 17px 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.26);
+}
+
+.meta span {
+  color: rgba(17, 17, 17, 0.54);
+  font-size: 10px;
+  line-height: 1.35;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.meta strong {
+  color: #111111;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+}
+
+.p24Panel,
+.bankPanel,
+.form {
+  min-width: 0;
+  border-top: 1px solid #111111;
+}
+
+.bankHeading {
+  padding: 30px 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.26);
+}
+
+.bankHeading .sectionLabel {
+  margin-bottom: 15px;
+}
+
+.bankHeading h2 {
+  margin: 0;
+  color: #111111;
+  font-family: Georgia, serif;
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.bankHeading > p:last-child {
+  max-width: 36rem;
+  margin: 18px 0 0;
+  color: rgba(17, 17, 17, 0.68);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.transferAmount {
+  padding: 30px 0;
+  border-bottom: 1px solid #111111;
+}
+
+.transferAmount span {
+  display: block;
+  margin-bottom: 13px;
+  color: rgba(17, 17, 17, 0.54);
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.transferAmount strong {
+  display: block;
+  font-family: Georgia, serif;
+  font-size: clamp(42px, 5vw, 68px);
+  font-weight: 400;
+  line-height: 0.92;
+  letter-spacing: -0.045em;
+}
+
+.transferRows {
+  border-bottom: 1px solid #111111;
+}
+
+.transferRow {
+  min-height: 88px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 20px;
+  align-items: center;
+  padding: 18px 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.26);
+}
+
+.transferRow:last-child {
+  border-bottom: 0;
+}
+
+.transferRow > div {
+  min-width: 0;
+}
+
+.transferRow span,
+.bankDetails span {
+  display: block;
+  margin-bottom: 7px;
+  color: rgba(17, 17, 17, 0.54);
+  font-size: 10px;
+  line-height: 1.2;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.transferRow strong,
+.bankDetails strong {
+  display: block;
+  overflow-wrap: anywhere;
+  color: #111111;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.35;
+  letter-spacing: -0.015em;
+}
+
+.transferRow button {
+  min-width: 94px;
+  min-height: 38px;
+  padding: 0 14px;
+  border: 1px solid rgba(17, 17, 17, 0.36);
+  border-radius: 0;
+  background: #ffffff;
+  color: #111111;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 220ms ease, background-color 220ms ease;
+}
+
+.transferRow button:hover,
+.transferRow button:focus-visible {
+  background: #111111;
+  color: #ffffff;
+}
+
+.bankDetails {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid #111111;
+}
+
+.bankDetails > div {
+  min-width: 0;
+  padding: 20px 18px;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.26);
+}
+
+.bankDetails > div:nth-child(odd) {
+  padding-left: 0;
+  border-right: 1px solid rgba(17, 17, 17, 0.26);
+}
+
+.bankDetails > div:nth-child(even) {
+  padding-right: 0;
+}
+
+.bankDetails > div:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.bankNotice {
+  max-width: 36rem;
+  margin: 22px 0 0;
+  color: rgba(17, 17, 17, 0.68);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.bankNotice strong {
+  color: #111111;
+  font-weight: 600;
+}
+
+.panelHeading,
+.p24Heading {
+  padding: 30px 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.26);
+}
+
+.panelHeading .sectionLabel,
+.p24Heading .sectionLabel {
+  margin-bottom: 15px;
+}
+
+.panelHeading h2,
+.p24Heading h2 {
+  margin: 0;
+  color: #111111;
+  font-family: Georgia, serif;
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.demoBanner {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  gap: 20px;
+  align-items: center;
+  padding: 22px 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.26);
+}
+
+.demoIndex {
+  min-height: 38px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #111111;
+  color: #111111;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.13em;
+}
+
+.demoBanner strong {
+  display: block;
+  color: #111111;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.demoBanner p {
+  margin: 4px 0 0;
+  color: rgba(17, 17, 17, 0.62);
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.methodGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid #111111;
+}
+
+.method,
+.methodActive {
+  position: relative;
+  min-width: 0;
+  min-height: 94px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) 14px;
+  gap: 14px;
+  align-items: center;
+  padding: 18px;
+  border: 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.26);
+  background: #ffffff;
+  color: #111111;
+  cursor: pointer;
+  text-align: left;
+  transition: color 220ms ease, background-color 220ms ease;
+}
+
+.method:nth-child(odd),
+.methodActive:nth-child(odd) {
+  border-right: 1px solid rgba(17, 17, 17, 0.26);
+}
+
+.method:nth-last-child(-n + 2),
+.methodActive:nth-last-child(-n + 2) {
+  border-bottom: 0;
+}
+
+.methodActive {
+  color: #ffffff;
+  background: #111111;
+}
+
+.method:hover:not(.methodActive) {
+  background: #f5f5f2;
+}
+
+.methodIndex {
+  color: rgba(17, 17, 17, 0.46);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+.methodActive .methodIndex {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.methodCopy {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.methodCopy strong {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.methodCopy small {
+  overflow: hidden;
+  color: rgba(17, 17, 17, 0.56);
+  font-size: 11px;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.methodActive .methodCopy small {
+  color: rgba(255, 255, 255, 0.62);
+}
+
+.methodIndicator {
+  width: 12px;
+  height: 12px;
+  border: 1px solid rgba(17, 17, 17, 0.42);
+  border-radius: 999px;
+}
+
+.methodActive .methodIndicator {
+  border: 3px solid #ffffff;
+}
+
+.demoMethodDetails {
+  padding: 30px 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.26);
+}
+
+.demoMethodDetails label,
+.demoMethodDetails label > span {
+  display: block;
+}
+
+.demoMethodDetails label > span {
+  margin-bottom: 13px;
+  color: rgba(17, 17, 17, 0.54);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.demoMethodDetails input {
+  width: 100%;
+  min-height: 58px;
+  padding: 0 16px;
+  border: 1px solid rgba(17, 17, 17, 0.34);
+  border-radius: 0;
+  outline: 0;
+  background: #ffffff;
+  color: #111111;
+  font: inherit;
+  font-size: 20px;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+}
+
+.demoMethodDetails input:focus {
+  border-color: #111111;
+}
+
+.demoMethodDetails p {
+  max-width: 34rem;
+  margin: 0;
+  color: rgba(17, 17, 17, 0.68);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.demoError {
+  margin-top: 24px;
+  padding: 18px 0;
+  color: #7c1818;
+  border-top: 1px solid #7c1818;
+  border-bottom: 1px solid #7c1818;
+}
+
+.demoError strong {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.demoError p {
+  margin: 5px 0 0;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.demoSuccessButton,
+.demoFailureButton,
+.form button {
+  width: 100%;
+  min-height: 58px;
+  border-radius: 0;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: color 220ms ease, background-color 220ms ease;
+}
+
+.demoSuccessButton,
+.form button {
+  margin-top: 30px;
+  border: 1px solid #111111;
+  background: #111111;
+  color: #ffffff;
+}
+
+.demoSuccessButton:hover:not(:disabled),
+.form button:hover:not(:disabled) {
+  background: #ffffff;
+  color: #111111;
+}
+
+.demoFailureButton {
+  margin-top: 10px;
+  border: 1px solid rgba(17, 17, 17, 0.34);
+  background: #ffffff;
+  color: #111111;
+}
+
+.demoFailureButton:hover:not(:disabled) {
+  background: #f5f5f2;
+}
+
+.demoSuccessButton:disabled,
+.demoFailureButton:disabled,
+.form button:disabled {
+  cursor: default;
+  opacity: 0.36;
+}
+
+.demoLegal,
+.note,
+.error {
+  max-width: 36rem;
+  margin: 18px 0 0;
+  color: rgba(17, 17, 17, 0.58);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.error {
+  color: #7c1818;
+}
+
+.paymentLegalGate {
+  padding-top: 30px;
+  border-top: 1px solid #111111;
+}
+
+.paymentLegalGate h2 {
+  margin: 14px 0 16px;
+  font-family: Georgia, serif;
+  font-size: clamp(28px, 3vw, 42px);
+  font-weight: 400;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.paymentLegalGate > p:not(.sectionLabel):not(.error) {
+  margin: 0 0 26px;
+  color: rgba(17, 17, 17, 0.68);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.paymentLegalConsent {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+  margin-top: 26px;
+  padding: 20px;
+  background: #ffffff;
+  border: 1px solid rgba(17, 17, 17, 0.28);
+  cursor: pointer;
+}
+
+.paymentLegalConsent input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+  accent-color: #111111;
+}
+
+.paymentLegalConsent span {
+  font-size: 12px;
+  line-height: 1.58;
+}
+
+.paymentLegalConsent a {
+  color: inherit;
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+
+.paymentLegalButton {
+  width: 100%;
+  min-height: 58px;
+  margin-top: 18px;
+  color: #ffffff;
+  background: #111111;
+  border: 1px solid #111111;
+  border-radius: 0;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.paymentLegalButton:disabled {
+  cursor: default;
+  opacity: 0.36;
+}
+
+.stripeMobileFix {
+  width: 100%;
+  min-width: 0;
+  padding: 30px 0 0;
+}
+
+.page :global(#tokama-payment-element-wrap),
+.page :global(#payment-element),
+.page :global(#payment-element iframe),
+.page :global(#tokama-payment-element-wrap iframe),
+.page :global(.StripeElement iframe) {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+}
+
+.successScreen {
+  width: min(100%, 960px);
+  margin: 0 auto;
+}
+
+.successCard {
+  padding: clamp(38px, 7vw, 72px);
+  border: 1px solid #111111;
+  text-align: center;
+  animation: successCardIn 620ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.successMark {
+  position: relative;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 28px;
+  border: 1px solid #111111;
+}
+
+.successMark span {
+  position: absolute;
+  left: 50%;
+  top: 47%;
+  width: 25px;
+  height: 13px;
+  border-left: 1.5px solid #111111;
+  border-bottom: 1.5px solid #111111;
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.successCard .eyebrow {
+  margin-bottom: 22px;
+}
+
+.successCard h1 {
+  margin: 0 auto;
+  font-size: clamp(36px, 5vw, 64px);
+}
+
+.successReservationCode {
+  width: min(100%, 360px);
+  margin: 32px auto 0;
+  padding: 17px 20px;
+  border-top: 1px solid #111111;
+  border-bottom: 1px solid #111111;
+}
+
+.successReservationCode span {
+  display: block;
+  margin-bottom: 6px;
+  color: rgba(17, 17, 17, 0.52);
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.successReservationCode strong {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+.successCard > p:not(.eyebrow) {
+  max-width: 38rem;
+  margin: 26px auto 0;
+  color: rgba(17, 17, 17, 0.68);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+@keyframes successCardIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 1180px) {
+  .card {
+    grid-template-columns: 1fr;
+  }
+
+  .summary {
+    position: static;
+    max-width: 720px;
+  }
+}
+
+@media (max-width: 780px) {
+  .page {
+    padding:
+      calc(var(--tokama-header-height, 132px) + 54px)
+      18px
+      76px;
+  }
+
+  .card {
+    gap: 54px;
+  }
+
+  .summary h1 {
+    font-size: clamp(36px, 11vw, 52px);
+  }
+
+  .meta {
+    margin-top: 32px;
+  }
+
+  .meta div {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+
+  .methodGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .method,
+  .methodActive,
+  .method:nth-child(odd),
+  .methodActive:nth-child(odd),
+  .method:nth-last-child(-n + 2),
+  .methodActive:nth-last-child(-n + 2) {
+    border-right: 0;
+    border-bottom: 1px solid rgba(17, 17, 17, 0.26);
+  }
+
+  .method:last-child,
+  .methodActive:last-child {
+    border-bottom: 0;
+  }
+
+  .bankDetails {
+    grid-template-columns: 1fr;
+  }
+
+  .bankDetails > div,
+  .bankDetails > div:nth-child(odd),
+  .bankDetails > div:nth-child(even),
+  .bankDetails > div:nth-last-child(-n + 2) {
+    padding: 18px 0;
+    border-right: 0;
+    border-bottom: 1px solid rgba(17, 17, 17, 0.26);
+  }
+
+  .bankDetails > div:last-child {
+    border-bottom: 0;
+  }
+
+  .transferRow {
+    grid-template-columns: minmax(0, 1fr) 82px;
+    gap: 12px;
+  }
+
+  .transferRow button {
+    min-width: 82px;
+    padding: 0 9px;
+  }
+
+  .successCard {
+    padding: 38px 22px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .method,
+  .methodActive,
+  .demoSuccessButton,
+  .demoFailureButton,
+  .form button,
+  .successCard {
+    animation: none;
+    transition: none;
+  }
+}

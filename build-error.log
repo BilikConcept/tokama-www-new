@@ -1,0 +1,23 @@
+
+> tokama-www-new@0.1.0 build
+> next build
+
+▲ Next.js 16.2.10 (Turbopack)
+- Environments: .env.local
+
+  Creating an optimized production build ...
+✓ Compiled successfully in 2.4s
+  Running TypeScript ...
+Failed to type check.
+
+./app/api/tokama-booking/request/route.ts:504:11
+Type error: Object literal may only specify known properties, and 'variant' does not exist in type '{ addon: any; quantity: number; nights: number; adults: number; children: number; housesCount: number; }'.
+
+  [90m502 |[0m         [36mconst[0m total = calculateAddonTotal({
+  [90m503 |[0m           addon,
+[31m[1m>[0m [90m504 |[0m           variant,
+  [90m    |[0m           [31m[1m^[0m
+  [90m505 |[0m           quantity,
+  [90m506 |[0m           nights,
+  [90m507 |[0m           adults,
+Next.js build worker exited with code: 1 and signal: null

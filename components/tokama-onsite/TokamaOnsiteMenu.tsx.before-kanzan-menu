@@ -1,0 +1,312 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import styles from "./TokamaOnsiteMenu.module.css";
+
+type Variant = {
+  id: string;
+  name: string;
+  description: string | null;
+  priceCents: number;
+  pricingUnit: string;
+};
+
+type CatalogItem = {
+  slug: string;
+  name: string;
+  description: string | null;
+  priceCents: number;
+  pricingUnit: string;
+  variants: Variant[];
+};
+
+type Selection = {
+  quantity: number;
+  variantId: string;
+};
+
+type Props = {
+  houseCode: string;
+};
+
+function money(value: number) {
+  return new Intl.NumberFormat("pl-PL", {
+    style: "currency",
+    currency: "PLN",
+    maximumFractionDigits: 0,
+  }).format(value / 100);
+}
+
+export function TokamaOnsiteMenu({ houseCode }: Props) {
+  const [items, setItems] = useState<CatalogItem[]>([]);
+  const [selections, setSelections] = useState<Record<string, Selection>>({});
+  const [note, setNote] = useState("");
+  const [state, setState] = useState<"loading" | "ready" | "sending" | "success" | "error">("loading");
+  const [message, setMessage] = useState("");
+  const [orderCode, setOrderCode] = useState("");
+  const [orderTotal, setOrderTotal] = useState(0);
+
+  useEffect(() => {
+    async function loadCatalog() {
+      try {
+        const response = await fetch(`/api/tokama-onsite/catalog?house=${houseCode}`, {
+          credentials: "include",
+          cache: "no-store",
+        });
+        const result = await response.json().catch(() => null);
+
+        if (!response.ok || !result?.ok) {
+          setState("error");
+          setMessage(result?.message || "Sesja pobytu wygasła.");
+          return;
+        }
+
+        setItems(result.items || []);
+        setState("ready");
+      } catch {
+        setState("error");
+        setMessage("Nie udało się pobrać menu.");
+      }
+    }
+
+    void loadCatalog();
+  }, [houseCode]);
+
+  function selectItem(item: CatalogItem) {
+    setSelections((current) => {
+      if (current[item.slug]) {
+        const next = { ...current };
+        delete next[item.slug];
+        return next;
+      }
+
+      return {
+        ...current,
+        [item.slug]: {
+          quantity: 1,
+          variantId: item.variants[0]?.id || "",
+        },
+      };
+    });
+  }
+
+  function updateQuantity(slug: string, change: number) {
+    setSelections((current) => {
+      const selected = current[slug];
+      if (!selected) return current;
+
+      return {
+        ...current,
+        [slug]: {
+          ...selected,
+          quantity: Math.min(10, Math.max(1, selected.quantity + change)),
+        },
+      };
+    });
+  }
+
+  function updateVariant(slug: string, variantId: string) {
+    setSelections((current) => ({
+      ...current,
+      [slug]: {
+        ...(current[slug] || { quantity: 1 }),
+        variantId,
+      },
+    }));
+  }
+
+  const selectedItems = useMemo(
+    () =>
+      items.filter((item) => selections[item.slug]).map((item) => {
+        const selected = selections[item.slug];
+        const variant = item.variants.find((entry) => entry.id === selected.variantId);
+        const unitPrice = variant?.priceCents ?? item.priceCents;
+
+        return {
+          item,
+          quantity: selected.quantity,
+          variantId: selected.variantId,
+          unitPrice,
+        };
+      }),
+    [items, selections]
+  );
+
+  const estimatedTotal = selectedItems.reduce(
+    (sum, item) => sum + item.unitPrice * item.quantity,
+    0
+  );
+
+  async function submitOrder() {
+    if (!selectedItems.length) return;
+
+    setState("sending");
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/tokama-onsite/orders", {
+        credentials: "include",
+        cache: "no-store",
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          house: houseCode,
+          note,
+          items: selectedItems.map((item) => ({
+            slug: item.item.slug,
+            variantId: item.variantId,
+            quantity: item.quantity,
+          })),
+        }),
+      });
+
+      const result = await response.json().catch(() => null);
+
+      if (!response.ok || !result?.ok) {
+        setState("error");
+        setMessage(result?.message || "Nie udało się wysłać zamówienia.");
+        return;
+      }
+
+      setOrderCode(result.order.code);
+      setOrderTotal(result.order.totalCents);
+      setState("success");
+    } catch {
+      setState("error");
+      setMessage("Nie udało się wysłać zamówienia.");
+    }
+  }
+
+  if (state === "loading") {
+    return <main className={styles.page}><p className={styles.loading}>Ładujemy menu…</p></main>;
+  }
+
+  if (state === "error") {
+    return (
+      <main className={styles.page}>
+        <section className={styles.errorScreen}>
+          <h1>Nie udało się<br />otworzyć <em>menu.</em></h1>
+          <p>{message}</p>
+          <a href={`/pobyt/${houseCode.toLowerCase()}`}>Wróć do weryfikacji</a>
+        </section>
+      </main>
+    );
+  }
+
+  if (state === "success") {
+    return (
+      <main className={styles.page}>
+        <section className={styles.successScreen}>
+          <p className={styles.kicker}>TOKAMA · {houseCode}</p>
+          <h1>Zamówienie<br />przyjęte.</h1>
+          <p>Numer zamówienia: <strong>{orderCode}</strong></p>
+          <p>Łączna kwota: <strong>{money(orderTotal)}</strong></p>
+          <p className={styles.successNote}>Gospodarz otrzyma Twoje zamówienie i wróci z informacją o realizacji.</p>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className={styles.page}>
+      <section className={styles.menu}>
+        <header className={styles.header}>
+          <p className={styles.kicker}>TOKAMA · {houseCode}</p>
+          <h1>Zamów podczas<br /><em>pobytu.</em></h1>
+          <p>Wybierz dostępne opcje. Potwierdzimy zamówienie po otrzymaniu zgłoszenia.</p>
+        </header>
+
+        {!items.length ? (
+          <p className={styles.empty}>Aktualnie nie ma dostępnych opcji do zamówienia.</p>
+        ) : (
+          <div className={styles.layout}>
+            <div className={styles.list}>
+              {items.map((item) => {
+                const selected = selections[item.slug];
+                const visiblePrice = selected
+                  ? item.variants.find((variant) => variant.id === selected.variantId)?.priceCents ?? item.priceCents
+                  : item.variants[0]?.priceCents ?? item.priceCents;
+
+                return (
+                  <article key={item.slug} className={`${styles.item} ${selected ? styles.itemSelected : ""}`}>
+                    <button type="button" className={styles.itemToggle} onClick={() => selectItem(item)}>
+                      <span>
+                        <strong>{item.name}</strong>
+                        {item.description ? <small>{item.description}</small> : null}
+                      </span>
+                      <b>{selected ? "−" : "+"}</b>
+                    </button>
+
+                    <p className={styles.itemPrice}>{money(visiblePrice)}</p>
+
+                    {selected ? (
+                      <div className={styles.itemOptions}>
+                        {item.variants.length > 1 ? (
+                          <div className={styles.variants}>
+                            {item.variants.map((variant) => (
+                              <button
+                                type="button"
+                                key={variant.id}
+                                className={selected.variantId === variant.id ? styles.variantActive : ""}
+                                onClick={() => updateVariant(item.slug, variant.id)}
+                              >
+                                {variant.name} · {money(variant.priceCents)}
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
+
+                        <div className={styles.quantity}>
+                          <button type="button" onClick={() => updateQuantity(item.slug, -1)}>−</button>
+                          <strong>{selected.quantity}</strong>
+                          <button type="button" onClick={() => updateQuantity(item.slug, 1)}>+</button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })}
+            </div>
+
+            <aside className={styles.summary}>
+              <p>Twoje zamówienie</p>
+
+              {selectedItems.length ? (
+                <>
+                  <div className={styles.summaryItems}>
+                    {selectedItems.map(({ item, quantity, unitPrice }) => (
+                      <span key={item.slug}>
+                        {quantity} × {item.name}
+                        <b>{money(unitPrice * quantity)}</b>
+                      </span>
+                    ))}
+                  </div>
+
+                  <label>
+                    <span>Uwagi do zamówienia</span>
+                    <textarea
+                      value={note}
+                      onChange={(event) => setNote(event.target.value)}
+                      rows={3}
+                    />
+                  </label>
+
+                  <div className={styles.total}>
+                    <span>Szacunkowo</span>
+                    <strong>{money(estimatedTotal)}</strong>
+                  </div>
+
+                  <button type="button" className={styles.submit} onClick={submitOrder} disabled={state === "sending"}>
+                    {state === "sending" ? "Wysyłanie…" : "Złóż zamówienie"}
+                  </button>
+                </>
+              ) : (
+                <span className={styles.emptySummary}>Wybierz pozycje z menu.</span>
+              )}
+            </aside>
+          </div>
+        )}
+      </section>
+    </main>
+  );
+}

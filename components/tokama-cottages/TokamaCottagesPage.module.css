@@ -1,0 +1,212 @@
+.page {
+  color: #111;
+  background: #fff;
+}
+
+.intro {
+  display: grid;
+  min-height: 0;
+  place-items: center;
+  padding: clamp(130px, 11vw, 230px) 24px;
+  background: #fff;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.intro > div,
+.detailsHeader {
+  width: min(100%, 800px);
+}
+
+.intro h1,
+.detailsHeader h2 {
+  max-width: 760px;
+  margin: 0;
+  color: #111;
+  font-family: Georgia, serif;
+  font-size: clamp(28px, calc(23.38px + 1.233vw), 36px);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.intro h1 em,
+.detailsHeader h2 em {
+  font-style: italic;
+}
+
+.intro p,
+.detailsHeader > p {
+  max-width: 36rem;
+  margin: 24px auto 0;
+  color: #111;
+  font-size: clamp(14px, calc(12.84px + 0.308vw), 16px);
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+}
+
+.gallery {
+  position: relative;
+  min-height: calc(100svh - 150px);
+  overflow: hidden;
+  background: #111;
+}
+
+.slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transform: scale(1.035);
+  transition: opacity 800ms ease, transform 1600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.slideActive {
+  z-index: 1;
+  opacity: 1;
+  transform: scale(1);
+}
+
+.slide img {
+  object-fit: cover;
+}
+
+.progress {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 30px;
+  left: 0;
+  display: flex;
+  width: min(54vw, 440px);
+  gap: 7px;
+  margin: 0 auto;
+}
+
+.progressItem {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 2px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.progressItem::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: #fff;
+  transform: scaleX(0);
+  transform-origin: left center;
+}
+
+.progressItemActive::after {
+  animation: cottages-slide-progress 3s linear both;
+}
+
+@keyframes cottages-slide-progress {
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.details {
+  padding: clamp(84px, 11vw, 150px) 24px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+.detailsHeader {
+  margin: 0 auto;
+  text-align: center;
+}
+
+.detailsList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  width: min(100%, 980px);
+  margin: clamp(58px, 8vw, 96px) auto 0;
+  border-top: 1px solid rgba(17, 17, 17, 0.22);
+}
+
+.detail {
+  padding: 26px 28px 0;
+  border-right: 1px solid rgba(17, 17, 17, 0.22);
+}
+
+.detail:first-child {
+  padding-left: 0;
+}
+
+.detail:last-child {
+  padding-right: 0;
+  border-right: 0;
+}
+
+.detail h3 {
+  margin: 0;
+  color: #111;
+  font-family: Georgia, serif;
+  font-size: 23px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.detail p {
+  margin: 14px 0 0;
+  color: #111;
+  font-size: 14px;
+  letter-spacing: -0.01em;
+  line-height: 1.45;
+}
+
+@media (max-width: 760px) {
+  .intro,
+  .details {
+    padding-right: 18px;
+    padding-left: 18px;
+  }
+
+  .intro {
+    padding-top: 112px;
+    padding-bottom: 112px;
+  }
+
+  .gallery {
+    min-height: 78svh;
+  }
+
+  .progress {
+    bottom: 22px;
+    width: min(76vw, 330px);
+    gap: 5px;
+  }
+
+  .detailsList {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .detail,
+  .detail:first-child,
+  .detail:last-child {
+    padding: 24px 0 0;
+    border-right: 0;
+  }
+
+  .detail:not(:first-child) {
+    border-top: 1px solid rgba(17, 17, 17, 0.22);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide {
+    transition: none;
+  }
+
+  .progressItemActive::after {
+    animation: none;
+    transform: scaleX(1);
+  }
+}

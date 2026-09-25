@@ -1,0 +1,101 @@
+.footer {
+  min-height: 72svh;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: clamp(72px, 8vw, 112px) clamp(20px, 7vw, 112px) 28px;
+  background: #ffffff;
+  color: #000000;
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 40px;
+  padding-bottom: clamp(60px, 8vw, 110px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.14);
+}
+
+.logo {
+  color: #000000;
+  text-decoration: none;
+  font-size: clamp(46px, 8vw, 124px);
+  line-height: 0.85;
+  letter-spacing: 0.06em;
+  font-weight: 450;
+}
+
+.top p {
+  max-width: 360px;
+  margin: 0;
+  font-size: clamp(22px, 2.4vw, 42px);
+  line-height: 1.05;
+  letter-spacing: -0.06em;
+  font-style: italic;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 40px;
+  padding: clamp(42px, 6vw, 80px) 0;
+}
+
+.grid div {
+  display: grid;
+  gap: 14px;
+  align-content: start;
+}
+
+.grid span {
+  margin-bottom: 10px;
+  color: rgba(0, 0, 0, 0.46);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.grid a {
+  width: fit-content;
+  color: #000000;
+  text-decoration: none;
+  font-size: 14px;
+  line-height: 1;
+}
+
+.bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.14);
+}
+
+.bottom small {
+  color: rgba(0, 0, 0, 0.52);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 780px) {
+  .footer {
+    min-height: 100svh;
+    padding: 78px 20px 24px;
+  }
+
+  .top {
+    flex-direction: column;
+  }
+
+  .logo {
+    font-size: clamp(42px, 14vw, 72px);
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 34px;
+  }
+}

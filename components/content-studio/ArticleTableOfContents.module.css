@@ -1,0 +1,115 @@
+.section {
+  padding: 84px 6cqi;
+  border-bottom: 1px solid rgba(17, 17, 17, .12);
+  background: #f5f3ee;
+}
+
+.desktop {
+  display: grid;
+  grid-template-columns: minmax(170px, .55fr) minmax(240px, 1fr) minmax(320px, 1.5fr);
+  gap: 4cqi;
+  align-items: start;
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.desktop > p {
+  margin: 7px 0 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .18em;
+}
+
+.desktop h2 {
+  margin: 0;
+  font: 400 clamp(38px, 4.5cqi, 68px) / 1 Georgia, serif;
+  letter-spacing: -.04em;
+}
+
+.section ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: 1px solid rgba(17, 17, 17, .2);
+}
+
+.section li {
+  border-bottom: 1px solid rgba(17, 17, 17, .2);
+}
+
+.section a {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  gap: 12px;
+  padding: 17px 0;
+  color: inherit;
+  font: 400 16px / 1.4 Georgia, serif;
+  text-decoration: none;
+  transition: opacity 180ms ease;
+}
+
+.section a:hover {
+  opacity: .55;
+}
+
+.section a span {
+  padding-top: 3px;
+  font: 600 9px / 1 sans-serif;
+  letter-spacing: .12em;
+}
+
+.nested a {
+  padding-left: 28px;
+}
+
+.mobile {
+  display: none;
+}
+
+@container tokama-article (max-width: 760px) {
+  .section {
+    padding: 34px 24px;
+  }
+
+  .desktop {
+    display: none;
+  }
+
+  .mobile {
+    display: block;
+  }
+
+  .mobile summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: .15em;
+    list-style: none;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .mobile summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .mobile summary span {
+    font-size: 20px;
+    font-weight: 400;
+    transition: transform 180ms ease;
+  }
+
+  .mobile[open] summary span {
+    transform: rotate(45deg);
+  }
+
+  .mobile ol {
+    margin-top: 28px;
+  }
+
+  .nested a {
+    padding-left: 18px;
+  }
+}

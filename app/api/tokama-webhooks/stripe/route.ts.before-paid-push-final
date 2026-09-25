@@ -1,0 +1,138 @@
+import { NextResponse } from "next/server";
+import Stripe from "stripe";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
+
+function getStripe() {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+
+  if (!secretKey) {
+    throw new Error("Missing STRIPE_SECRET_KEY.");
+  }
+
+  return new Stripe(secretKey);
+}
+
+export async function POST(request: Request) {
+  try {
+    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+    if (!webhookSecret) {
+      return NextResponse.json(
+        { ok: false, message: "Missing STRIPE_WEBHOOK_SECRET." },
+        { status: 500 }
+      );
+    }
+
+    const stripe = getStripe();
+    const signature = request.headers.get("stripe-signature");
+
+    if (!signature) {
+      return NextResponse.json(
+        { ok: false, message: "Missing Stripe signature." },
+        { status: 400 }
+      );
+    }
+
+    const rawBody = await request.text();
+
+    let event: Stripe.Event;
+
+    try {
+      event = stripe.webhooks.constructEvent(
+        rawBody,
+        signature,
+        webhookSecret
+      );
+    } catch (error) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message:
+            error instanceof Error
+              ? `Invalid Stripe signature: ${error.message}`
+              : "Invalid Stripe signature.",
+        },
+        { status: 400 }
+      );
+    }
+
+    if (event.type !== "payment_intent.succeeded") {
+      return NextResponse.json({
+        ok: true,
+        ignored: true,
+        eventType: event.type,
+      });
+    }
+
+    const paymentIntent = event.data.object as Stripe.PaymentIntent;
+
+    const reservationId = paymentIntent.metadata?.reservation_id;
+    const publicCode = paymentIntent.metadata?.public_code;
+
+    if (!reservationId) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: "Missing reservation_id in Stripe metadata.",
+        },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getSupabaseAdmin();
+    const paidAt = new Date().toISOString();
+
+    const { error: paymentError } = await supabase
+      .from("tokama_payment_requests")
+      .update({
+        status: "paid",
+        paid_at: paidAt,
+        updated_at: paidAt,
+      })
+      .eq("stripe_payment_intent_id", paymentIntent.id);
+
+    if (paymentError) {
+      return NextResponse.json(
+        { ok: false, message: paymentError.message },
+        { status: 500 }
+      );
+    }
+
+    const { data: reservation, error: reservationError } = await supabase
+      .from("tokama_reservations")
+      .update({
+        status: "paid",
+        updated_at: paidAt,
+      })
+      .eq("id", reservationId)
+      .select("id, public_code, status")
+      .single();
+
+    if (reservationError || !reservation) {
+      return NextResponse.json(
+        {
+          ok: false,
+          message: reservationError?.message || "Reservation update failed.",
+        },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      eventType: event.type,
+      paymentIntentId: paymentIntent.id,
+      reservation,
+      publicCode,
+    });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        message:
+          error instanceof Error ? error.message : "Unknown Stripe webhook error.",
+      },
+      { status: 500 }
+    );
+  }
+}

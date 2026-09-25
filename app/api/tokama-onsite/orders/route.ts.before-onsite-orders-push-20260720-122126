@@ -1,0 +1,218 @@
+import { createHash, randomBytes } from "node:crypto";
+import { cookies } from "next/headers";
+import { NextResponse } from "next/server";
+import { getSupabaseAdmin } from "@/lib/supabase/admin";
+
+export const dynamic = "force-dynamic";
+type RequestItem = {
+  slug?: unknown;
+  variantId?: unknown;
+  quantity?: unknown;
+};
+
+const ALLOWED_HOUSE_CODES = new Set(["TO", "KA", "MA"]);
+
+function normaliseText(value: unknown, maxLength: number) {
+  return typeof value === "string" ? value.trim().slice(0, maxLength) : "";
+}
+
+async function getGuestSession(houseCode: string) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("tokama_onsite_session_v3")?.value;
+
+  if (!token || !ALLOWED_HOUSE_CODES.has(houseCode)) return null;
+
+  const tokenHash = createHash("sha256").update(token).digest("hex");
+  const supabase = getSupabaseAdmin();
+
+  const { data: house } = await supabase
+    .from("tokama_houses")
+    .select("id, code, name")
+    .eq("code", houseCode)
+    .maybeSingle();
+
+  if (!house) return null;
+
+  const { data: session } = await supabase
+    .from("tokama_onsite_guest_sessions")
+    .select("id, reservation_id, house_id, expires_at")
+    .eq("token_hash", tokenHash)
+    .eq("house_id", house.id)
+    .gt("expires_at", new Date().toISOString())
+    .maybeSingle();
+
+  if (!session) return null;
+
+  return { house, session };
+}
+
+function calculateOnsiteItemTotal(input: {
+  priceCents: number;
+  pricingUnit: string;
+  quantity: number;
+  adults: number;
+  children: number;
+  countsChildren: boolean;
+}) {
+  const price = Math.max(0, input.priceCents);
+  const quantity = Math.max(1, input.quantity);
+  const adults = Math.max(1, input.adults);
+  const guests = input.countsChildren
+    ? adults + Math.max(0, input.children)
+    : adults;
+
+  if (input.pricingUnit === "per_person_per_night") {
+    return price * guests * quantity;
+  }
+
+  if (input.pricingUnit === "per_two_people_per_night") {
+    return price * Math.ceil(guests / 2) * quantity;
+  }
+
+  return price * quantity;
+}
+
+export async function POST(request: Request) {
+  let body: { house?: unknown; note?: unknown; items?: RequestItem[] };
+
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ ok: false, message: "Nieprawidłowe dane zamówienia." }, { status: 400 });
+  }
+
+  const houseCode = normaliseText(body.house, 8).toUpperCase();
+  const selectedItems = Array.isArray(body.items) ? body.items.slice(0, 20) : [];
+  const note = normaliseText(body.note, 800);
+
+  if (!selectedItems.length) {
+    return NextResponse.json(
+      { ok: false, message: "Wybierz przynajmniej jedną pozycję." },
+      { status: 400 }
+    );
+  }
+
+  const access = await getGuestSession(houseCode);
+
+  if (!access) {
+    return NextResponse.json(
+      { ok: false, message: "Sesja pobytu wygasła. Wpisz ponownie numer rezerwacji." },
+      { status: 401 }
+    );
+  }
+
+  const supabase = getSupabaseAdmin();
+  const slugs = [...new Set(selectedItems.map((item) => normaliseText(item.slug, 120)).filter(Boolean))];
+
+  const [{ data: addons, error: addonsError }, { data: reservation, error: reservationError }] =
+    await Promise.all([
+      supabase
+        .from("tokama_addons")
+        .select("*")
+        .in("slug", slugs)
+        .eq("is_active", true),
+      supabase
+        .from("tokama_reservations")
+        .select("adults, children")
+        .eq("id", access.session.reservation_id)
+        .maybeSingle(),
+    ]);
+
+  if (addonsError || reservationError || !reservation) {
+    return NextResponse.json(
+      { ok: false, message: "Nie udało się przygotować zamówienia." },
+      { status: 500 }
+    );
+  }
+
+  const addonBySlug = new Map((addons || []).map((addon: any) => [addon.slug, addon]));
+  const orderItems = [];
+
+  for (const selected of selectedItems) {
+    const slug = normaliseText(selected.slug, 120);
+    const addon = addonBySlug.get(slug);
+
+    if (!addon) {
+      return NextResponse.json(
+        { ok: false, message: "Jedna z wybranych pozycji nie jest już dostępna." },
+        { status: 409 }
+      );
+    }
+
+    const variants = Array.isArray(addon.variants)
+      ? addon.variants.filter((variant: any) => variant.is_active !== false)
+      : [];
+
+    const variantId = normaliseText(selected.variantId, 120);
+    const variant =
+      variants.find((item: any) => String(item.id) === variantId) ||
+      variants[0] ||
+      null;
+
+    const quantity = Math.min(10, Math.max(1, Number(selected.quantity || 1)));
+    const priceCents = Number(variant?.price_cents ?? addon.price_cents ?? 0);
+    const pricingUnit = String(variant?.pricing_unit || addon.pricing_unit || "per_stay");
+    const itemName = String(variant?.name_pl || addon.name_pl || addon.slug);
+    const totalCents = calculateOnsiteItemTotal({
+      priceCents,
+      pricingUnit,
+      quantity,
+      adults: Number(reservation.adults || 1),
+      children: Number(reservation.children || 0),
+      countsChildren: addon.counts_children !== false,
+    });
+
+    orderItems.push({
+      item_name: itemName,
+      unit_price_cents: priceCents,
+      quantity,
+      total_cents: totalCents,
+    });
+  }
+
+  const totalCents = orderItems.reduce((sum, item) => sum + item.total_cents, 0);
+  const publicCode = `ONS-${Date.now().toString(36).toUpperCase()}-${randomBytes(3).toString("hex").toUpperCase()}`;
+
+  const { data: order, error: orderError } = await supabase
+    .from("tokama_onsite_orders")
+    .insert({
+      public_code: publicCode,
+      reservation_id: access.session.reservation_id,
+      house_id: access.house.id,
+      guest_session_id: access.session.id,
+      note: note || null,
+      total_cents: totalCents,
+      currency: "PLN",
+    })
+    .select("id, public_code, total_cents, currency")
+    .single();
+
+  if (orderError || !order) {
+    return NextResponse.json(
+      { ok: false, message: "Nie udało się utworzyć zamówienia." },
+      { status: 500 }
+    );
+  }
+
+  const { error: itemsError } = await supabase
+    .from("tokama_onsite_order_items")
+    .insert(orderItems.map((item) => ({ ...item, order_id: order.id })));
+
+  if (itemsError) {
+    await supabase.from("tokama_onsite_orders").delete().eq("id", order.id);
+
+    return NextResponse.json(
+      { ok: false, message: "Nie udało się zapisać pozycji zamówienia." },
+      { status: 500 }
+    );
+  }
+
+  return NextResponse.json({
+    ok: true,
+    order: {
+      code: order.public_code,
+      totalCents: order.total_cents,
+      currency: order.currency,
+    },
+  });
+}

@@ -1,0 +1,809 @@
+"use client";
+
+import { useEffect, useMemo, useState, useRef } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import styles from "./TokamaHome.module.css";
+
+type Locale = "pl" | "en";
+
+const copy = {
+  pl: {
+    menu: "Menu",
+    close: "Zamknij",
+    book: "Rezerwuj",
+    dates: "Daty",
+    guests: "Goście",
+    search: "Sprawdź",
+    selectDates: "Wybierz daty",
+    dateRequired: "Wybierz datę przyjazdu i wyjazdu.",
+    adults: "dorośli",
+    children: "dzieci",
+    decrease: "Zmniejsz",
+    increase: "Zwiększ",
+    nav: ["Domki", "Relaks", "Eventy", "Galeria", "Kontakt"],
+    contact: "Kontakt",
+    previousMonth: "Poprzedni miesiąc",
+    nextMonth: "Następny miesiąc",
+    weekDays: ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"],
+  },
+  en: {
+    menu: "Menu",
+    close: "Close",
+    book: "Book",
+    dates: "Dates",
+    guests: "Guests",
+    search: "Search",
+    selectDates: "Select dates",
+    dateRequired: "Choose your check-in and check-out dates.",
+    adults: "adults",
+    children: "children",
+    decrease: "Decrease",
+    increase: "Increase",
+    nav: ["Cottages", "Relax", "Events", "Gallery", "Contact"],
+    contact: "Contact",
+    previousMonth: "Previous month",
+    nextMonth: "Next month",
+    weekDays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  },
+} as const;
+
+function toDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function fromDateKey(value: string) {
+  return new Date(`${value}T12:00:00`);
+}
+
+function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function addMonths(date: Date, amount: number) {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function getCalendarDays(month: Date) {
+  const firstDay = new Date(month.getFullYear(), month.getMonth(), 1);
+  const lastDay = new Date(month.getFullYear(), month.getMonth() + 1, 0);
+  const offset = (firstDay.getDay() + 6) % 7;
+  const days: Array<Date | null> = [];
+
+  for (let index = 0; index < offset; index += 1) days.push(null);
+
+  for (let day = 1; day <= lastDay.getDate(); day += 1) {
+    days.push(new Date(month.getFullYear(), month.getMonth(), day));
+  }
+
+  while (days.length % 7 !== 0) days.push(null);
+
+  return days;
+}
+
+function formatDate(value: string, locale: Locale) {
+  if (!value) return "";
+
+  return new Intl.DateTimeFormat(locale === "pl" ? "pl-PL" : "en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(fromDateKey(value));
+}
+
+function getGuestSummary(adults: number, children: number, locale: Locale) {
+  if (locale === "pl") {
+    return `${adults} ${adults === 1 ? "dorosły" : "dorosłych"} · ${children} ${
+      children === 1 ? "dziecko" : "dzieci"
+    }`;
+  }
+
+  return `${adults} ${adults === 1 ? "adult" : "adults"} · ${children} ${
+    children === 1 ? "child" : "children"
+  }`;
+}
+
+function OffersViewportHeight() {
+  useEffect(() => {
+    const header =
+      Array.from(document.querySelectorAll("header")).find((element) =>
+        element.querySelector('img[src*="tokama-logo"]')
+      ) || document.querySelector("header");
+
+    if (!header) return;
+
+    const updateHeight = () => {
+      document.documentElement.style.setProperty(
+        "--tokama-header-height",
+        `${header.getBoundingClientRect().height}px`
+      );
+    };
+
+    updateHeight();
+
+    const observer = new ResizeObserver(updateHeight);
+    observer.observe(header);
+    window.addEventListener("resize", updateHeight);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", updateHeight);
+    };
+  }, []);
+
+  return null;
+}
+
+export function TokamaHome({ locale }: { locale: Locale }) {
+  const t = copy[locale];
+  const bookHref = locale === "pl" ? "/rezerwacja" : "/en/book";
+
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [guestsOpen, setGuestsOpen] = useState(false);
+  const footerStageRef = useRef<HTMLElement | null>(null);
+  const [checkin, setCheckin] = useState("");
+  const [checkout, setCheckout] = useState("");
+  const [adults, setAdults] = useState(2);
+  const [children, setChildren] = useState(0);
+  const [searchError, setSearchError] = useState("");
+  const [viewMonth, setViewMonth] = useState(() => startOfMonth(new Date()));
+
+  const today = toDateKey(new Date());
+  const currentMonth = startOfMonth(new Date());
+  const calendarDays = useMemo(() => getCalendarDays(viewMonth), [viewMonth]);
+
+  const dateSummary =
+    checkin && checkout
+      ? `${formatDate(checkin, locale)} — ${formatDate(checkout, locale)}`
+      : checkin
+        ? `${formatDate(checkin, locale)} —`
+        : t.selectDates;
+
+  function selectDate(value: string) {
+    if (value < today) return;
+
+    if (!checkin || checkout) {
+      setCheckin(value);
+      setCheckout("");
+      setSearchError("");
+      return;
+    }
+
+    if (value <= checkin) {
+      setCheckin(value);
+      return;
+    }
+
+    setCheckout(value);
+    setCalendarOpen(false);
+    setSearchError("");
+  }
+
+  function handleSearch(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!checkin || !checkout) {
+      setSearchError(t.dateRequired);
+      setCalendarOpen(true);
+      return;
+    }
+
+    const query = new URLSearchParams({
+      checkin,
+      checkout,
+      adults: String(adults),
+      children: String(children),
+    });
+
+    window.location.assign(`${bookHref}?${query.toString()}`);
+  }
+
+
+const offerSlides =
+    locale === "pl"
+      ? [
+          {
+            tab: "Basen",
+            title: <>Basen bliżej <em>natury.</em></>,
+            text: "W sezonie wspólny basen jest dostępny dla gości wszystkich trzech domków.",
+            action: "Sprawdź dostępność",
+            video: "basen.mp4",
+          },
+          {
+            tab: "Sauna",
+            title: <>Ciepło dla <em>spokoju.</em></>,
+            text: "Sauna pozwala zwolnić tempo i odpocząć po dniu spędzonym nad jeziorem.",
+            action: "Sprawdź dostępność",
+            video: "sauna.mp4",
+          },
+          {
+            tab: "Jacuzzi",
+            title: <>Chwile bez <em>planu.</em></>,
+            text: "Jacuzzi w sezonie to przestrzeń na spokojny wieczór i czas tylko dla siebie.",
+            action: "Sprawdź dostępność",
+            video: "jacuzzi.mp4",
+          },
+        ]
+      : [
+          {
+            tab: "Pool",
+            title: <>A pool close <em>to nature.</em></>,
+            text: "During the season, the shared pool is available to guests of all three cottages.",
+            action: "Check availability",
+            video: "basen.mp4",
+          },
+          {
+            tab: "Sauna",
+            title: <>Warmth for <em>stillness.</em></>,
+            text: "The sauna lets you slow down and unwind after a day spent by the lake.",
+            action: "Check availability",
+            video: "sauna.mp4",
+          },
+          {
+            tab: "Hot tub",
+            title: <>Moments without <em>a plan.</em></>,
+            text: "During the season, the hot tub is a place for quiet evenings and time to yourself.",
+            action: "Check availability",
+            video: "jacuzzi.mp4",
+          },
+        ];
+
+  const [offerSlide, setOfferSlide] = useState(0);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setOfferSlide((current) => (current + 1) % offerSlides.length);
+    }, 6000);
+
+    return () => window.clearTimeout(timeout);
+  }, [offerSlide, offerSlides.length]);
+  // Footer scroll animation
+  useEffect(() => {
+    const stage = footerStageRef.current;
+
+    if (!stage) return;
+
+    let animationFrame = 0;
+
+    const updateAnimation = () => {
+      animationFrame = 0;
+
+      const bounds = stage.getBoundingClientRect();
+      const travelDistance = Math.max(stage.offsetHeight - window.innerHeight, 1);
+      const progress = Math.min(1, Math.max(0, -bounds.top / travelDistance));
+      const calendarExit = Math.min(1, Math.max(0, (progress - 0.72) / 0.18));
+
+      stage.style.setProperty("--footer-photo-y", `${progress * 10}%`);
+      stage.style.setProperty("--footer-photo-scale", `${1.08 - progress * 0.13}`);
+      stage.style.setProperty("--footer-calendar-opacity", `${1 - calendarExit}`);
+      stage.style.setProperty("--footer-calendar-y", `${calendarExit * -92}px`);
+      stage.style.setProperty("--footer-shade-opacity", `${0.3 + progress * 0.16}`);
+    };
+
+    const requestUpdate = () => {
+      if (!animationFrame) {
+        animationFrame = window.requestAnimationFrame(updateAnimation);
+      }
+    };
+
+    updateAnimation();
+    window.addEventListener("scroll", requestUpdate, { passive: true });
+    window.addEventListener("resize", requestUpdate);
+
+    return () => {
+      window.removeEventListener("scroll", requestUpdate);
+      window.removeEventListener("resize", requestUpdate);
+
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+    };
+  }, []);
+
+
+  return (
+    <main className={styles.page}>
+      <OffersViewportHeight />
+      <section id="tokama-home-hero" className={styles.hero} data-tokama-dark-header>
+        <video className={styles.video} autoPlay muted loop playsInline preload="auto">
+          <source src="/desktop/main-hero.mp4" type="video/mp4" />
+        </video>
+        <div className={styles.overlay} />
+
+        <form id="availability" className={styles.availabilityPanel} onSubmit={handleSearch}>
+          {searchError ? <p className={styles.formError}>{searchError}</p> : null}
+
+          <div className={styles.availabilityField}>
+            <button
+              type="button"
+              className={styles.availabilityTrigger}
+              onClick={() => {
+                setCalendarOpen((value) => !value);
+                setGuestsOpen(false);
+              }}
+              aria-expanded={calendarOpen}
+            >
+              <span>{t.dates}</span>
+              <strong>{dateSummary}</strong>
+            </button>
+
+            {calendarOpen ? (
+              <div className={styles.calendarPopover}>
+                <div className={styles.calendarHeader}>
+                  <button
+                    type="button"
+                    onClick={() => setViewMonth((month) => addMonths(month, -1))}
+                    disabled={viewMonth <= currentMonth}
+                    aria-label={t.previousMonth}
+                  >
+                    ←
+                  </button>
+                  <strong>
+                    {viewMonth.toLocaleDateString(locale === "pl" ? "pl-PL" : "en-GB", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </strong>
+                  <button
+                    type="button"
+                    onClick={() => setViewMonth((month) => addMonths(month, 1))}
+                    aria-label={t.nextMonth}
+                  >
+                    →
+                  </button>
+                </div>
+
+                <div className={styles.calendarWeekdays}>
+                  {t.weekDays.map((day) => <span key={day}>{day}</span>)}
+                </div>
+
+                <div className={styles.calendarGrid}>
+                  {calendarDays.map((day, index) => {
+                    if (!day) {
+                      return <span className={styles.calendarBlank} key={`blank-${index}`} />;
+                    }
+
+                    const value = toDateKey(day);
+                    const isStart = value === checkin;
+                    const isEnd = value === checkout;
+                    const isInRange = Boolean(checkin && checkout && value > checkin && value < checkout);
+                    const isDisabled = value < today;
+
+                    return (
+                      <button
+                        type="button"
+                        key={value}
+                        disabled={isDisabled}
+                        onClick={() => selectDate(value)}
+                        aria-label={formatDate(value, locale)}
+                        className={[
+                          styles.calendarDay,
+                          isStart ? styles.calendarDayStart : "",
+                          isEnd ? styles.calendarDayEnd : "",
+                          isInRange ? styles.calendarDayRange : "",
+                        ].filter(Boolean).join(" ")}
+                      >
+                        {day.getDate()}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className={styles.availabilityField}>
+            <button
+              type="button"
+              className={styles.availabilityTrigger}
+              onClick={() => {
+                setGuestsOpen((value) => !value);
+                setCalendarOpen(false);
+              }}
+              aria-expanded={guestsOpen}
+            >
+              <span>{t.guests}</span>
+              <strong>{getGuestSummary(adults, children, locale)}</strong>
+            </button>
+
+            {guestsOpen ? (
+              <div className={styles.guestsPopover}>
+                <div className={styles.guestRow}>
+                  <span>{t.adults}</span>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setAdults((value) => Math.max(1, value - 1))}
+                      aria-label={`${t.decrease} ${t.adults}`}
+                    >
+                      −
+                    </button>
+                    <strong>{adults}</strong>
+                    <button
+                      type="button"
+                      onClick={() => setAdults((value) => Math.min(21, value + 1))}
+                      aria-label={`${t.increase} ${t.adults}`}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className={styles.guestRow}>
+                  <span>{t.children}</span>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setChildren((value) => Math.max(0, value - 1))}
+                      aria-label={`${t.decrease} ${t.children}`}
+                    >
+                      −
+                    </button>
+                    <strong>{children}</strong>
+                    <button
+                      type="button"
+                      onClick={() => setChildren((value) => Math.min(30, value + 1))}
+                      aria-label={`${t.increase} ${t.children}`}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <button type="submit" className={styles.searchButton} aria-label={t.search}>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <circle cx="10.8" cy="10.8" r="5.8" />
+  <path d="m15.2 15.2 4.3 4.3" />
+</svg>
+            </button>
+        </form>
+      </section>
+
+            <section id="domki" className={styles.homeIntro}>
+        <div className={styles.cottagesIntroContent}>
+          <h2 className={styles.cottagesIntroHeading}>
+            {locale === "pl" ? (
+              <>Domki całoroczne nad jeziorem, blisko <em>Iławy.</em></>
+            ) : (
+              <>Year-round lakeside cottages, near <em>Iława.</em></>
+            )}
+          </h2>
+
+          <p className={styles.cottagesIntroDescription}>
+            {locale === "pl"
+              ? "TO, KA i MA to trzy jednakowo wyposażone domki całoroczne w Windykach, niedaleko Iławy i jeziora Łabędź. Każdy oferuje prywatną przestrzeń dla maksymalnie siedmiu osób — z aneksem kuchennym, łazienką, Wi‑Fi, klimatyzacją, ogrzewaniem podłogowym, własnym tarasem i miejscem parkingowym."
+              : "TO, KA and MA are three equally equipped year-round cottages in Windyki, close to Iława and Lake Łabędź. Each offers a private space for up to seven guests, with a kitchen area, bathroom, Wi‑Fi, air conditioning, underfloor heating, a private terrace and parking."}
+          </p>
+
+          <ul className={styles.cottagesIntroFeatures}>
+            <li>{locale === "pl" ? "Do 7 osób w każdym domku" : "Up to 7 guests in each cottage"}</li>
+            <li>{locale === "pl" ? "Prywatny taras i parking" : "Private terrace and parking"}</li>
+            <li>{locale === "pl" ? "Komfort przez cały rok" : "Comfort throughout the year"}</li>
+          </ul>
+
+          <Link href="#availability" className={styles.cottagesIntroLink}>
+            {locale === "pl" ? "Sprawdź dostępność" : "Check availability"}
+            <span aria-hidden="true">↗</span>
+          </Link>
+        </div>
+      </section>
+
+                  <section
+        id="galeria"
+        className={styles.cottagesGallery}
+        aria-label={locale === "pl" ? "Zdjęcie domków TOKAMA" : "TOKAMA cottage photograph"}
+      >
+        <div className={styles.cottagesGalleryImage}>
+          <Image
+            src="/images/tokama-media-01.jpg"
+            alt={locale === "pl" ? "Domki całoroczne TOKAMA w Windykach koło Iławy" : "TOKAMA year-round cottages in Windyki near Iława"}
+            fill
+            sizes="100vw"
+          />
+        </div>
+      </section>
+
+
+
+
+
+
+      <section id="oferty" className={styles.offers}>
+        <div className={styles.offersVisual}>
+          <video
+            key={offerSlides[offerSlide].video}
+            className={styles.offersVideo}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="metadata"
+          >
+            <source src={`/desktop/${offerSlides[offerSlide].video}`} type="video/mp4" />
+          </video>
+          <div className={styles.offersShade} />
+
+          <div className={styles.offersTabs} role="tablist" aria-label={locale === "pl" ? "Strefa relaksu" : "Relaxation area"}>
+            {offerSlides.map((slide, index) => {
+              const isActive = index === offerSlide;
+
+              return (
+                <button
+                  key={slide.tab}
+                  type="button"
+                  role="tab"
+                  aria-selected={isActive}
+                  className={styles.offersTab}
+                  onClick={() => setOfferSlide(index)}
+                >
+                  <span className={styles.offersTabLabel}>{slide.tab}</span>
+                  <span className={styles.offersTabTrack} aria-hidden="true">
+                    {isActive && <span key={offerSlide} className={styles.offersTabProgress} />}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div key={offerSlide} className={`${styles.offersContent} ${styles.offersSlideContent}`}>
+            <h2 className={styles.offersTitle}>{offerSlides[offerSlide].title}</h2>
+            <p className={styles.offersText}>{offerSlides[offerSlide].text}</p>
+            <Link href={bookHref} className={styles.offersButton}>
+              {offerSlides[offerSlide].action}
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className={styles.eventIntro}>
+        <div className={styles.eventIntroInner}>
+          <h2>
+            {locale === "pl" ? (
+              <>Kameralne wydarzenia z własną <em>oprawą.</em></>
+            ) : (
+              <>Intimate events with their own <em>setting.</em></>
+            )}
+          </h2>
+
+          <p>
+            {locale === "pl"
+              ? "Od rodzinnych uroczystości po spotkania w mniejszym gronie — w TOKAMA łączymy salę bankietową, noclegi i otoczenie natury w jednym miejscu."
+              : "From family celebrations to smaller gatherings — TOKAMA brings together an event venue, accommodation and the calm of nature in one place."}
+          </p>
+        </div>
+      </section>
+
+      <section id="eventy" className={styles.eventVenue} data-tokama-dark-header>
+        <video
+          className={styles.eventVenueVideo}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+        >
+          <source src="/desktop/sala.mp4" type="video/mp4" />
+        </video>
+        <div className={styles.eventVenueShade} />
+
+        <div className={styles.eventVenueContent}>
+          <h2>
+            {locale === "pl" ? (
+              <>Sala bankietowa blisko <em>natury.</em></>
+            ) : (
+              <>An event venue close <em>to nature.</em></>
+            )}
+          </h2>
+
+          <p>
+            {locale === "pl"
+              ? "Kameralna przestrzeń dla maksymalnie 40 osób, wyposażona kuchnia, nagłośnienie i noclegi w trzech domkach. Catering dobieramy do charakteru wydarzenia."
+              : "An intimate space for up to 40 guests, with an equipped kitchen, sound system and accommodation in all three cottages. Catering is tailored to your event."}
+          </p>
+
+          <a
+            href="mailto:kontakt@tokama.pl?subject=Sala%20bankietowa%20TOKAMA"
+            className={styles.eventVenueButton}
+          >
+            {locale === "pl" ? "Zapytaj o termin" : "Ask about a date"}
+          </a>
+        </div>
+      </section>
+
+    
+                  <section
+        ref={footerStageRef}
+        className={styles.footerBookingStage}
+        data-tokama-dark-header
+        aria-label={locale === "pl" ? "Sprawdź dostępność" : "Check availability"}
+      >
+        <div className={styles.footerPhotoPin} aria-hidden="true">
+          <div className={styles.footerPhoto} />
+          <div className={styles.footerPhotoShade} />
+        </div>
+
+        <div className={styles.footerBookingPin}>
+          <div className={styles.footerBookingContent}>
+<form id="footer-availability" className={styles.availabilityPanel} onSubmit={handleSearch}>
+          {searchError ? <p className={styles.formError}>{searchError}</p> : null}
+
+          <div className={styles.availabilityField}>
+            <button
+              type="button"
+              className={styles.availabilityTrigger}
+              onClick={() => {
+                setCalendarOpen((value) => !value);
+                setGuestsOpen(false);
+              }}
+              aria-expanded={calendarOpen}
+            >
+              <span>{t.dates}</span>
+              <strong>{dateSummary}</strong>
+            </button>
+
+            {calendarOpen ? (
+              <div className={styles.calendarPopover}>
+                <div className={styles.calendarHeader}>
+                  <button
+                    type="button"
+                    onClick={() => setViewMonth((month) => addMonths(month, -1))}
+                    disabled={viewMonth <= currentMonth}
+                    aria-label={t.previousMonth}
+                  >
+                    ←
+                  </button>
+                  <strong>
+                    {viewMonth.toLocaleDateString(locale === "pl" ? "pl-PL" : "en-GB", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </strong>
+                  <button
+                    type="button"
+                    onClick={() => setViewMonth((month) => addMonths(month, 1))}
+                    aria-label={t.nextMonth}
+                  >
+                    →
+                  </button>
+                </div>
+
+                <div className={styles.calendarWeekdays}>
+                  {t.weekDays.map((day) => <span key={day}>{day}</span>)}
+                </div>
+
+                <div className={styles.calendarGrid}>
+                  {calendarDays.map((day, index) => {
+                    if (!day) {
+                      return <span className={styles.calendarBlank} key={`blank-${index}`} />;
+                    }
+
+                    const value = toDateKey(day);
+                    const isStart = value === checkin;
+                    const isEnd = value === checkout;
+                    const isInRange = Boolean(checkin && checkout && value > checkin && value < checkout);
+                    const isDisabled = value < today;
+
+                    return (
+                      <button
+                        type="button"
+                        key={value}
+                        disabled={isDisabled}
+                        onClick={() => selectDate(value)}
+                        aria-label={formatDate(value, locale)}
+                        className={[
+                          styles.calendarDay,
+                          isStart ? styles.calendarDayStart : "",
+                          isEnd ? styles.calendarDayEnd : "",
+                          isInRange ? styles.calendarDayRange : "",
+                        ].filter(Boolean).join(" ")}
+                      >
+                        {day.getDate()}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <div className={styles.availabilityField}>
+            <button
+              type="button"
+              className={styles.availabilityTrigger}
+              onClick={() => {
+                setGuestsOpen((value) => !value);
+                setCalendarOpen(false);
+              }}
+              aria-expanded={guestsOpen}
+            >
+              <span>{t.guests}</span>
+              <strong>{getGuestSummary(adults, children, locale)}</strong>
+            </button>
+
+            {guestsOpen ? (
+              <div className={styles.guestsPopover}>
+                <div className={styles.guestRow}>
+                  <span>{t.adults}</span>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setAdults((value) => Math.max(1, value - 1))}
+                      aria-label={`${t.decrease} ${t.adults}`}
+                    >
+                      −
+                    </button>
+                    <strong>{adults}</strong>
+                    <button
+                      type="button"
+                      onClick={() => setAdults((value) => Math.min(21, value + 1))}
+                      aria-label={`${t.increase} ${t.adults}`}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+
+                <div className={styles.guestRow}>
+                  <span>{t.children}</span>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setChildren((value) => Math.max(0, value - 1))}
+                      aria-label={`${t.decrease} ${t.children}`}
+                    >
+                      −
+                    </button>
+                    <strong>{children}</strong>
+                    <button
+                      type="button"
+                      onClick={() => setChildren((value) => Math.min(30, value + 1))}
+                      aria-label={`${t.increase} ${t.children}`}
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+          </div>
+
+          <button type="submit" className={styles.searchButton} aria-label={t.search}>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+  <circle cx="10.8" cy="10.8" r="5.8" />
+  <path d="m15.2 15.2 4.3 4.3" />
+</svg>
+            </button>
+        </form>
+          </div>
+        </div>
+      </section>
+
+
+
+
+
+      <footer className={styles.siteFooter}>
+        <div className={styles.footerBrand}>TOKAMA</div>
+
+        <div className={styles.footerContact}>
+          <a href="mailto:kontakt@tokama.pl">kontakt@tokama.pl</a>
+          <a href="tel:+48604811474">+48 604 811 474</a>
+          <span>Windyki 116, 14-200 Iława</span>
+        </div>
+
+        <div className={styles.footerLegal}>
+          <a href="/polityka-prywatnosci">Polityka prywatności</a>
+          <a href="/polityka-cookie">Polityka cookie</a>
+          <span>© {new Date().getFullYear()} TOKAMA</span>
+        </div>
+      </footer>
+
+    </main>
+  );
+}

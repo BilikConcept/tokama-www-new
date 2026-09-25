@@ -1,0 +1,136 @@
+.section {
+  min-height: 100svh;
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  color: #000000;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.inner {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.58fr);
+  grid-template-rows: auto auto;
+  gap: clamp(36px, 5vw, 76px) clamp(42px, 7vw, 108px);
+  align-items: end;
+  padding: clamp(86px, 8vw, 118px) clamp(20px, 7vw, 112px);
+}
+
+.kicker {
+  margin: 0 0 34px;
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 11px;
+  line-height: 1;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.copy h2 {
+  max-width: 940px;
+  margin: 0;
+  font-size: clamp(54px, 7.4vw, 118px);
+  line-height: 0.9;
+  letter-spacing: -0.08em;
+  font-weight: 380;
+}
+
+.copy h2 em {
+  font-style: italic;
+  font-weight: 380;
+  letter-spacing: -0.09em;
+}
+
+.text {
+  max-width: 520px;
+  margin: 34px 0 0;
+  color: rgba(0, 0, 0, 0.72);
+  font-size: clamp(16px, 1.12vw, 18px);
+  line-height: 1.68;
+  letter-spacing: -0.02em;
+}
+
+.posts {
+  border-top: 1px solid rgba(0, 0, 0, 0.16);
+}
+
+.post {
+  min-height: 76px;
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 18px;
+  align-items: center;
+  color: #000000;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.16);
+}
+
+.post span {
+  color: rgba(0, 0, 0, 0.44);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+}
+
+.post strong {
+  font-size: 14px;
+  line-height: 1.25;
+  letter-spacing: -0.01em;
+  font-weight: 450;
+}
+
+.post i {
+  font-style: normal;
+  color: rgba(0, 0, 0, 0.54);
+}
+
+.imageWrap {
+  grid-column: 1 / -1;
+  height: clamp(240px, 32svh, 400px);
+  overflow: hidden;
+  background: #000000;
+}
+
+.imageWrap img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  filter: grayscale(100%);
+}
+
+@media (max-width: 980px) {
+  .section {
+    min-height: auto;
+  }
+
+  .inner {
+    min-height: 100svh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 30px;
+    padding: 94px 20px 52px;
+  }
+
+  .copy h2 {
+    font-size: clamp(44px, 13vw, 76px);
+    line-height: 0.92;
+  }
+
+  .text {
+    max-width: 94%;
+    margin-top: 26px;
+    font-size: 15px;
+    line-height: 1.62;
+  }
+
+  .posts {
+    width: 100%;
+  }
+
+  .imageWrap {
+    width: 100%;
+    height: 26svh;
+    min-height: 190px;
+  }
+}

@@ -1,0 +1,1005 @@
+"use client";
+
+import {
+  SiVisa,
+  SiMastercard,
+  SiAmericanexpress,
+  SiDiscover,
+  SiDinersclub,
+  SiJcb,
+} from "react-icons/si";
+
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import {
+  calculateAddonTotal,
+  formatMoney,
+  getHousesNeeded,
+  getNights,
+  type BookingAddon,
+  type BookingSettings,
+} from "@/lib/tokama/pricing";
+import { TokamaDateRangePicker } from "./TokamaDateRangePicker";
+import styles from "./TokamaBookingPage.module.css";
+
+type Locale = "pl" | "en";
+
+const content = {
+  pl: {
+    kicker: "Rezerwacja",
+    title: (
+      <>
+        Zaplanuj swój <em>pobyt</em>.
+      </>
+    ),
+    intro:
+      "Wybierz termin, liczbę gości i dodatki. Zobaczysz wyliczoną cenę pobytu, a po wysłaniu prośby host potwierdzi dostępność i wyśle link do płatności.",
+    dates: "Termin",
+    guests: "Goście",
+    details: "Dane gościa",
+    checkin: "Przyjazd",
+    checkout: "Wyjazd",
+    adults: "Dorośli",
+    children: "Dzieci",
+    name: "Imię i nazwisko",
+    email: "Email",
+    phone: "Telefon",
+    message: "Wiadomość opcjonalna",
+    messagePlaceholder: "Napisz, jeśli chcesz dodać coś do rezerwacji.",
+    addons: "Opcje dodatkowe",
+    summary: "Twój pobyt",
+    houses: "Domki",
+    nights: "Noce",
+    stay: "Pobyt",
+    extras: "Dodatki",
+    total: "Razem",
+    minimumStay: "Minimalna liczba dób",
+    submit: "Wyślij prośbę",
+    success: "Prośba została wysłana. Host potwierdzi rezerwację i wyśle link do płatności.",
+    error: "Nie udało się wysłać prośby. Sprawdź dane i spróbuj ponownie.",
+    paymentInfo: "Płatność online dopiero po akceptacji hosta.",
+    processRequest: "Prośba",
+    processApproval: "Akceptacja hosta",
+    processPayment: "Link do płatności",
+    decrease: "Zmniejsz",
+    increase: "Zwiększ",
+    perStay: "za pobyt",
+    perNight: "za noc",
+    perHouse: "za domek / pobyt",
+    perPersonNight: "za osobę / noc",
+  },
+  en: {
+    kicker: "Booking",
+    title: (
+      <>
+        Plan your <em>stay</em>.
+      </>
+    ),
+    intro:
+      "Choose your dates, number of guests and extras. You will see the calculated stay price, and after sending the request, the host will confirm availability and send a payment link.",
+    dates: "Dates",
+    guests: "Guests",
+    details: "Guest details",
+    checkin: "Check-in",
+    checkout: "Check-out",
+    adults: "Adults",
+    children: "Children",
+    name: "Full name",
+    email: "Email",
+    phone: "Phone",
+    message: "Optional message",
+    messagePlaceholder: "Add anything you would like us to know about your stay.",
+    addons: "Additional options",
+    summary: "Your stay",
+    houses: "Houses",
+    nights: "Nights",
+    stay: "Stay",
+    extras: "Extras",
+    total: "Total",
+    minimumStay: "Minimum stay",
+    submit: "Send request",
+    success: "Your request has been sent. The host will confirm it and send a payment link.",
+    error: "Could not send the request. Please check the details and try again.",
+    paymentInfo: "Online payment only after host approval.",
+    processRequest: "Request",
+    processApproval: "Host approval",
+    processPayment: "Payment link",
+    decrease: "Decrease",
+    increase: "Increase",
+    perStay: "per stay",
+    perNight: "per night",
+    perHouse: "per house / stay",
+    perPersonNight: "per person / night",
+  },
+};
+
+const fallbackSettings: BookingSettings = {
+  currency: "PLN",
+  base_price_per_house_per_night_cents: 120000,
+  min_nights: 2,
+  max_adults_per_house: 7,
+  houses_total: 3,
+  is_booking_open: true,
+};
+
+function clampNumber(value: number, min: number, max: number) {
+  if (Number.isNaN(value)) return min;
+  return Math.min(Math.max(value, min), max);
+}
+
+function getUnitLabel(unit: BookingAddon["pricing_unit"], locale: Locale) {
+  switch (unit) {
+    case "per_night":
+      return locale === "pl" ? "za noc" : "per night";
+
+    case "per_house_per_stay":
+      return locale === "pl" ? "za domek / pobyt" : "per house / stay";
+
+    case "per_person_per_night":
+      return locale === "pl" ? "za osobę / noc" : "per person / night";
+
+    case "per_quantity":
+      return locale === "pl" ? "za sztukę" : "per item";
+
+    case "per_two_people_per_night":
+      return locale === "pl" ? "za 2 osoby / noc" : "per 2 people / night";
+
+    case "per_stay":
+    default:
+      return locale === "pl" ? "za pobyt" : "per stay";
+  }
+}
+
+function getFiniteNumber(value: unknown, fallback: number) {
+  const nextValue = Number(value);
+
+  return Number.isFinite(nextValue) ? nextValue : fallback;
+}
+
+const PHONE_COUNTRY_CODES = [
+  { code: "+48", label: "Poland", flag: "PL" },
+  { code: "+49", label: "Germany", flag: "DE" },
+  { code: "+44", label: "United Kingdom", flag: "UK" },
+  { code: "+31", label: "Netherlands", flag: "NL" },
+  { code: "+33", label: "France", flag: "FR" },
+  { code: "+34", label: "Spain", flag: "ES" },
+  { code: "+39", label: "Italy", flag: "IT" },
+  { code: "+47", label: "Norway", flag: "NO" },
+  { code: "+46", label: "Sweden", flag: "SE" },
+  { code: "+45", label: "Denmark", flag: "DK" },
+  { code: "+354", label: "Iceland", flag: "IS" },
+  { code: "+1", label: "United States / Canada", flag: "US" },
+];
+
+function normalizePhone(countryCode: string, phone: string) {
+  const cleanCountryCode = countryCode.replace(/[^+0-9]/g, "");
+  const cleanPhone = phone.replace(/[^0-9]/g, "");
+
+  if (!cleanPhone) return "";
+
+  return `${cleanCountryCode}${cleanPhone}`;
+}
+
+function getStayDateKeys(checkin: string, checkout: string) {
+  const dates: string[] = [];
+
+  if (!checkin || !checkout) return dates;
+
+  const start = new Date(`${checkin}T00:00:00`);
+  const end = new Date(`${checkout}T00:00:00`);
+
+  if (!Number.isFinite(start.getTime()) || !Number.isFinite(end.getTime())) {
+    return dates;
+  }
+
+  const current = new Date(start);
+
+  while (current < end) {
+    const year = current.getFullYear();
+    const month = String(current.getMonth() + 1).padStart(2, "0");
+    const day = String(current.getDate()).padStart(2, "0");
+
+    dates.push(`${year}-${month}-${day}`);
+    current.setDate(current.getDate() + 1);
+  }
+
+  return dates;
+}
+
+function formatDate(value: string) {
+  if (!value) return "—";
+
+  const [year, month, day] = value.split("-");
+
+  if (!year || !month || !day) {
+    return value;
+  }
+
+  return `${day}.${month}.${year}`;
+}
+
+export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
+  const params = useSearchParams();
+  const t = content[locale];
+
+  const [settings, setSettings] = useState<BookingSettings>(fallbackSettings);
+  const [addons, setAddons] = useState<BookingAddon[]>([]);
+  const [selectedAddons, setSelectedAddons] = useState<Record<string, boolean>>({});
+  const [selectedAddonVariants, setSelectedAddonVariants] = useState<Record<string, string>>({});
+  const [selectedAddonDates, setSelectedAddonDates] = useState<Record<string, string[]>>({});
+  const [addonQuantities, setAddonQuantities] = useState<Record<string, number>>({});
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
+  const [availabilitySuggestions, setAvailabilitySuggestions] = useState<
+    { checkin: string; checkout: string }[]
+  >([]);
+  const [availabilityModalOpen, setAvailabilityModalOpen] = useState(false);
+  const [submittedReservationCode, setSubmittedReservationCode] = useState<string | null>(null);
+
+  const [checkin, setCheckin] = useState(params.get("checkin") || "");
+  const [checkout, setCheckout] = useState(params.get("checkout") || "");
+  const [adults, setAdults] = useState(
+    clampNumber(Number(params.get("adults") || 2), 1, 21)
+  );
+  const [children, setChildren] = useState(
+    clampNumber(Number(params.get("children") || 0), 0, 30)
+  );
+
+  const [guestName, setGuestName] = useState("");
+  const [guestEmail, setGuestEmail] = useState("");
+  const [guestPhone, setGuestPhone] = useState("");
+  const [phoneCountryCode, setPhoneCountryCode] = useState("+48");
+  const [guestMessage, setGuestMessage] = useState("");
+
+  useEffect(() => {
+    async function loadSettings() {
+      const response = await fetch("/api/tokama-booking/settings");
+      const data = await response.json();
+
+      setSettings(data.settings);
+      setAddons(data.addons || []);
+    }
+
+    loadSettings();
+  }, []);
+
+  const nights = useMemo(() => getNights(checkin, checkout), [checkin, checkout]);
+  const stayDateKeys = useMemo(
+    () => getStayDateKeys(checkin, checkout),
+    [checkin, checkout]
+  );
+
+  const canSelectAddons = Boolean(checkin && checkout && nights > 0);
+
+  useEffect(() => {
+    if (canSelectAddons) return;
+
+    setSelectedAddons({});
+    setSelectedAddonVariants({});
+    setSelectedAddonDates({});
+    setAddonQuantities({});
+  }, [canSelectAddons]);
+
+  const housesNeeded = useMemo(
+    () => getHousesNeeded(adults, settings.max_adults_per_house),
+    [adults, settings.max_adults_per_house]
+  );
+  const safeHousesNeeded = Number.isFinite(Number(housesNeeded)) ? Number(housesNeeded) : 1;
+
+  const stayPrice = useMemo(() => {
+    return nights * housesNeeded * settings.base_price_per_house_per_night_cents;
+  }, [nights, housesNeeded, settings.base_price_per_house_per_night_cents]);
+
+  const selectedAddonRows = useMemo(() => {
+    return addons
+      .filter((addon) => selectedAddons[addon.slug])
+      .map((addon) => {
+        const variants = Array.isArray(addon.variants)
+          ? addon.variants.filter((variant) => variant.is_active !== false)
+          : [];
+        const selectedVariantId =
+          selectedAddonVariants[addon.slug] || variants[0]?.id || "";
+        const variant =
+          variants.find((item) => item.id === selectedVariantId) || null;
+        const quantity = addonQuantities[addon.slug] || 1;
+        const selectedDates = addon.allow_day_selection
+          ? selectedAddonDates[addon.slug] || []
+          : [];
+        const total = calculateAddonTotal({
+          addon,
+          variant,
+          quantity,
+          nights,
+          adults,
+          children,
+          housesCount: Number.isFinite(Number(housesNeeded))
+            ? Number(housesNeeded)
+            : 1,
+          selectedDatesCount: selectedDates.length,
+        });
+
+        return {
+          addon,
+          variant,
+          quantity,
+          selectedDates,
+          total,
+        };
+      });
+  }, [
+    addons,
+    selectedAddons,
+    selectedAddonVariants,
+    selectedAddonDates,
+    addonQuantities,
+    nights,
+    adults,
+    children,
+    housesNeeded,
+  ]);
+
+  const addonsPrice = selectedAddonRows.reduce((sum, row) => sum + row.total, 0);
+  const total = stayPrice + addonsPrice;
+  const isBelowMinNights = nights > 0 && nights < settings.min_nights;
+  const tooManyGuests = housesNeeded > settings.houses_total;
+  const maxAdults = settings.houses_total * settings.max_adults_per_house;
+
+  function decreaseAdults() {
+    setAdults((value) => {
+      const currentValue = getFiniteNumber(value, 1);
+      const limit = getFiniteNumber(maxAdults, 21);
+
+      return clampNumber(currentValue - 1, 1, limit);
+    });
+  }
+
+  function increaseAdults() {
+    setAdults((value) => {
+      const currentValue = getFiniteNumber(value, 1);
+      const limit = getFiniteNumber(maxAdults, 21);
+
+      return clampNumber(currentValue + 1, 1, limit);
+    });
+  }
+
+  function decreaseChildren() {
+    setChildren((value) => {
+      const currentValue = getFiniteNumber(value, 0);
+
+      return clampNumber(currentValue - 1, 0, 30);
+    });
+  }
+
+  function increaseChildren() {
+    setChildren((value) => {
+      const currentValue = getFiniteNumber(value, 0);
+
+      return clampNumber(currentValue + 1, 0, 30);
+    });
+  }
+
+  const safeAdults = Number.isFinite(adults) ? adults : 1;
+  const safeChildren = Number.isFinite(children) ? children : 0;
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setSubmitStatus("loading");
+    setSubmitErrorMessage(null);
+    setAvailabilitySuggestions([]);
+    setAvailabilityModalOpen(false);
+
+    const payload = {
+      locale,
+      checkin,
+      checkout,
+      adults: safeAdults,
+      children: safeChildren,
+      guest_name: guestName,
+      guest_email: guestEmail,
+      guest_phone: normalizePhone(phoneCountryCode, guestPhone),
+      guest_message: guestMessage,
+      addons: selectedAddonRows.map((row) => ({
+        slug: row.addon.slug,
+        variant_id: row.variant?.id || null,
+        quantity: row.quantity,
+        selected_dates: row.selectedDates || [],
+      })),
+    };
+
+    const response = await fetch("/api/tokama-booking/request", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok || result?.ok !== true) {
+      const suggestions = Array.isArray(result?.suggestions)
+        ? result.suggestions
+        : [];
+
+      setSubmitErrorMessage(result?.message || t.error);
+      setSubmitStatus("error");
+
+      if (result?.code === "NO_AVAILABLE_HOUSES" && suggestions.length) {
+        setAvailabilitySuggestions(suggestions);
+        setAvailabilityModalOpen(true);
+      }
+
+      return;
+    }
+
+    setSubmitErrorMessage(null);
+    setAvailabilitySuggestions([]);
+    setAvailabilityModalOpen(false);
+    setSubmittedReservationCode(result?.reservation?.public_code || null);
+    setSubmitStatus("success");
+  }
+
+  if (submitStatus === "success") {
+    const isEnglish = locale === "en";
+
+    return (
+      <main className={styles.page}>
+        <section className={styles.successScreen}>
+          <div className={styles.successCard}>
+            <div className={styles.successMarkWrap} aria-hidden="true">
+              <div className={styles.successMark}>
+                <span />
+              </div>
+            </div>
+
+            <p className={styles.successKicker}>
+              {isEnglish ? "Request sent" : "Prośba wysłana"}
+            </p>
+
+            <h1 className={styles.successTitle}>
+              {isEnglish
+                ? "Your reservation request has been sent."
+                : "Twoja prośba o rezerwację została wysłana."}
+            </h1>
+
+            {submittedReservationCode ? (
+              <div className={styles.successReservationCode}>
+                <span>{isEnglish ? "Reservation number" : "Numer rezerwacji"}</span>
+                <strong>{submittedReservationCode}</strong>
+              </div>
+            ) : null}
+
+            <p className={styles.successText}>
+              {isEnglish
+                ? "The host will verify availability and contact you with the next step. Payment is not required yet."
+                : "Host zweryfikuje dostępność i skontaktuje się z Tobą z kolejnym krokiem. Płatność nie jest jeszcze wymagana."}
+            </p>
+
+            <div className={styles.successActions}>
+              <a
+                href={isEnglish ? "/en" : "/"}
+                className={styles.successPrimary}
+              >
+                {isEnglish ? "Back to homepage" : "Wróć do strony głównej"}
+              </a>
+
+              <a
+                href={isEnglish ? "/en/book" : "/rezerwacja"}
+                className={styles.successSecondary}
+              >
+                {isEnglish ? "Make another reservation" : "Zrób kolejną rezerwację"}
+              </a>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
+  return (
+    <main className={styles.page}>
+      <section className={styles.bookingHero}>
+        <div className={styles.editorial}>
+          <p className={styles.kicker}>{t.kicker}</p>
+          <h1>{t.title}</h1>
+          <p className={styles.intro}>{t.intro}</p>
+
+          <div className={styles.process}>
+            <span>01 / {t.processRequest}</span>
+            <span>02 / {t.processApproval}</span>
+            <span>03 / {t.processPayment}</span>
+          </div>
+        </div>
+
+        <form className={styles.bookingPanel} onSubmit={handleSubmit}>
+          <div className={styles.panelSection}>
+            <p className={styles.sectionLabel}>{t.dates}</p>
+
+            <TokamaDateRangePicker
+              locale={locale}
+              checkin={checkin}
+              checkout={checkout}
+              minNights={settings.min_nights}
+              onCheckinChange={setCheckin}
+              onCheckoutChange={setCheckout}
+            />
+          </div>
+
+          <div className={styles.panelSection}>
+            <p className={styles.sectionLabel}>{t.guests}</p>
+
+            <div className={styles.counterGrid}>
+              <div className={styles.counterCard}>
+                <input type="hidden" name="adults" value={String(safeAdults)} />
+                <span>{t.adults}</span>
+
+                <div className={styles.counterControl}>
+                  <button type="button" onClick={decreaseAdults} aria-label={`${t.decrease} ${t.adults}`}>
+                    −
+                  </button>
+                  <strong>{safeAdults}</strong>
+                  <button type="button" onClick={increaseAdults} aria-label={`${t.increase} ${t.adults}`}>
+                    +
+                  </button>
+                </div>
+              </div>
+
+              <div className={styles.counterCard}>
+                <input type="hidden" name="children" value={String(safeChildren)} />
+                <span>{t.children}</span>
+
+                <div className={styles.counterControl}>
+                  <button type="button" onClick={decreaseChildren} aria-label={`${t.decrease} ${t.children}`}>
+                    −
+                  </button>
+                  <strong>{safeChildren}</strong>
+                  <button type="button" onClick={increaseChildren} aria-label={`${t.increase} ${t.children}`}>
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.panelSection}>
+            <p className={styles.sectionLabel}>{t.addons}</p>
+
+            {!canSelectAddons ? (
+              <p className={styles.addonsLockedNotice}>
+                {locale === "pl"
+                  ? "Najpierw wybierz datę przyjazdu i wyjazdu, aby dodać opcje dodatkowe."
+                  : "Choose your check-in and check-out dates first to add extras."}
+              </p>
+            ) : null}
+
+            <div className={styles.addonCards}>
+              {addons.map((addon) => {
+                const active = selectedAddons[addon.slug];
+                const name = locale === "pl" ? addon.name_pl : addon.name_en;
+                const description =
+                  locale === "pl" ? addon.description_pl : addon.description_en;
+                const variants = Array.isArray(addon.variants)
+                  ? addon.variants.filter((variant) => variant.is_active !== false)
+                  : [];
+                const selectedVariantId =
+                  selectedAddonVariants[addon.slug] || variants[0]?.id || "";
+                const selectedVariant =
+                  variants.find((variant) => variant.id === selectedVariantId) || null;
+                const displayPrice = Number(
+                  selectedVariant?.price_cents ?? addon.price_cents ?? 0
+                );
+                const displayUnit =
+                  selectedVariant?.pricing_unit || addon.pricing_unit;
+                const quantityUnit =
+                  displayUnit === "per_quantity" && !addon.allow_day_selection;
+                const addonSelectedDates = selectedAddonDates[addon.slug] || [];
+                const daySelectionLabel =
+                  locale === "pl"
+                    ? addon.day_selection_label_pl
+                    : addon.day_selection_label_en;
+
+                return (
+                  <label
+                    className={`${styles.addonCard} ${
+                      active ? styles.addonCardActive : ""
+                    } ${!canSelectAddons ? styles.addonCardDisabled : ""}`}
+                    key={addon.slug}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={Boolean(active)}
+                      disabled={!canSelectAddons}
+                      onChange={(event) => {
+                        const checked = event.target.checked;
+
+                        setSelectedAddons((current) => ({
+                          ...current,
+                          [addon.slug]: checked,
+                        }));
+
+                        if (checked && variants.length && !selectedAddonVariants[addon.slug]) {
+                          setSelectedAddonVariants((current) => ({
+                            ...current,
+                            [addon.slug]: variants[0].id,
+                          }));
+                        }
+
+                        if (checked && addon.allow_day_selection) {
+                          setSelectedAddonDates((current) => ({
+                            ...current,
+                            [addon.slug]: stayDateKeys,
+                          }));
+                        }
+
+                        if (!checked) {
+                          setSelectedAddonDates((current) => ({
+                            ...current,
+                            [addon.slug]: [],
+                          }));
+                        }
+                      }}
+                    />
+
+                    <span className={styles.addonTop}>
+                      <strong>{name}</strong>
+                      <i>{active ? "✓" : "+"}</i>
+                    </span>
+
+                    {description && <small>{description}</small>}
+
+                    {active && variants.length > 0 && (
+                      <span className={styles.addonVariants}>
+                        {variants.map((variant) => {
+                          const variantName =
+                            locale === "pl" ? variant.name_pl : variant.name_en;
+                          const variantDescription =
+                            locale === "pl"
+                              ? variant.description_pl
+                              : variant.description_en;
+
+                          return (
+                            <button
+                              type="button"
+                              key={variant.id}
+                              className={`${styles.addonVariant} ${
+                                selectedVariantId === variant.id
+                                  ? styles.addonVariantActive
+                                  : ""
+                              }`}
+                              onClick={(event) => {
+                                event.preventDefault();
+
+                                setSelectedAddonVariants((current) => ({
+                                  ...current,
+                                  [addon.slug]: variant.id,
+                                }));
+                              }}
+                            >
+                              <span className={styles.addonVariantContent}>
+                                <strong>{variantName}</strong>
+                                {variantDescription ? <em>{variantDescription}</em> : null}
+                              </span>
+
+                              {addon.show_variant_prices !== false ? (
+                                <small>
+                                  {formatMoney(variant.price_cents, settings.currency)}
+                                </small>
+                              ) : null}
+                            </button>
+                          );
+                        })}
+                      </span>
+                    )}
+
+                    {active && addon.allow_day_selection && stayDateKeys.length > 0 ? (
+                      <span className={styles.addonDaySelector}>
+                        {daySelectionLabel ? <em>{daySelectionLabel}</em> : null}
+
+                        <span className={styles.addonDayButtons}>
+                          {stayDateKeys.map((dateKey) => {
+                            const selected = addonSelectedDates.includes(dateKey);
+
+                            return (
+                              <button
+                                type="button"
+                                key={dateKey}
+                                className={`${styles.addonDayButton} ${
+                                  selected ? styles.addonDayButtonActive : ""
+                                }`}
+                                onClick={(event) => {
+                                  event.preventDefault();
+
+                                  setSelectedAddonDates((current) => {
+                                    const currentDates = current[addon.slug] || [];
+                                    const nextDates = currentDates.includes(dateKey)
+                                      ? currentDates.filter((item) => item !== dateKey)
+                                      : [...currentDates, dateKey];
+
+                                    return {
+                                      ...current,
+                                      [addon.slug]: nextDates,
+                                    };
+                                  });
+                                }}
+                              >
+                                {formatDate(dateKey)}
+                              </button>
+                            );
+                          })}
+                        </span>
+                      </span>
+                    ) : null}
+
+                    <span className={styles.addonBottom}>
+                      <b>{formatMoney(displayPrice, settings.currency)}</b>
+                      <em>{getUnitLabel(displayUnit, locale)}</em>
+                    </span>
+
+                    {quantityUnit && active && (
+                      <input
+                        className={styles.addonQty}
+                        type="number"
+                        min="1"
+                        value={addonQuantities[addon.slug] || 1}
+                        onChange={(event) =>
+                          setAddonQuantities((current) => ({
+                            ...current,
+                            [addon.slug]: clampNumber(Number(event.target.value), 1, 10),
+                          }))
+                        }
+                        aria-label={`${name} quantity`}
+                      />
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className={styles.priceCard}>
+            <p className={styles.priceLabel}>{t.summary}</p>
+
+            <strong className={styles.totalPrice}>
+              {formatMoney(total, settings.currency)}
+            </strong>
+
+            <div className={styles.pricePills}>
+              <span>
+                {t.nights}: <b>{nights || "—"}</b>
+              </span>
+              <span>
+                {t.houses}: <b>{Number.isFinite(Number(housesNeeded)) ? Number(housesNeeded) : 1}</b>
+              </span>
+              <span>
+                {t.stay}: <b>{formatMoney(Number.isFinite(Number(stayPrice)) ? Number(stayPrice) : 0, settings.currency)}</b>
+              </span>
+              <span>
+                {t.extras}: <b>{formatMoney(addonsPrice, settings.currency)}</b>
+              </span>
+            </div>
+
+            <p className={styles.paymentInfo}>{t.paymentInfo}</p>
+
+            {isBelowMinNights && (
+              <p className={styles.warning}>
+                {locale === "pl"
+                  ? `Minimalna długość pobytu to ${settings.min_nights} noce.`
+                  : `Minimum stay is ${settings.min_nights} nights.`}
+              </p>
+            )}
+
+            {tooManyGuests && (
+              <p className={styles.warning}>
+                {locale === "pl"
+                  ? "Wybrana liczba dorosłych przekracza dostępność domków."
+                  : "The selected number of adults exceeds house availability."}
+              </p>
+            )}
+          </div>
+
+          <div className={styles.panelSection}>
+            <p className={styles.sectionLabel}>{t.details}</p>
+
+            <div className={styles.guestFields}>
+              <label className={styles.softField}>
+                <span>{t.name}</span>
+                <input
+                  type="text"
+                  name="name"
+                  autoComplete="name"
+                  required
+                  value={guestName}
+                  onChange={(event) => setGuestName(event.target.value)}
+                />
+              </label>
+
+              <div className={styles.fieldsTwo}>
+                <label className={styles.softField}>
+                  <span>{t.email}</span>
+                  <input
+                    type="email"
+                    name="email"
+                    autoComplete="email"
+                    required
+                    value={guestEmail}
+                    onChange={(event) => setGuestEmail(event.target.value)}
+                  />
+                </label>
+
+                <label className={styles.softField}>
+                  <span>{t.phone}</span>
+                  <div className={styles.phoneField}>
+              <select
+                className={styles.phoneCodeSelect}
+                value={phoneCountryCode}
+                onChange={(event) => setPhoneCountryCode(event.target.value)}
+                aria-label={locale === "en" ? "Country code" : "Numer kierunkowy"}
+              >
+                {PHONE_COUNTRY_CODES.map((item) => (
+                  <option key={item.code} value={item.code}>
+                    {item.flag} {item.code}
+                  </option>
+                ))}
+              </select>
+
+              <input
+                type="tel"
+                name="guest_phone"
+                value={guestPhone}
+                onChange={(event) => setGuestPhone(event.target.value)}
+                placeholder={locale === "en" ? "Phone number" : "Numer telefonu"}
+                required
+              />
+            </div>
+</label>
+              </div>
+
+              <label className={styles.softField}>
+                <span>{t.message}</span>
+                <textarea
+                  name="message"
+                  placeholder={t.messagePlaceholder}
+                  value={guestMessage}
+                  onChange={(event) => setGuestMessage(event.target.value)}
+                />
+              </label>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            className={styles.submit}
+            disabled={
+              submitStatus === "loading" ||
+              !checkin ||
+              !checkout ||
+              isBelowMinNights ||
+              tooManyGuests
+            }
+          >
+            {submitStatus === "loading" ? "..." : t.submit}
+          </button>
+
+          {(submitStatus as string) === "success" && <p className={styles.success}>{t.success}</p>}
+          <div className={styles.stripeTrustBanner}>
+            <div>
+              <span>
+                {locale === "en" ? "Secure payments" : "Bezpieczne płatności"}
+              </span>
+              <p>
+                {locale === "en"
+                  ? "After your stay is accepted, your payment will be securely processed by Stripe."
+                  : "Po zaakceptowaniu pobytu płatność będzie bezpiecznie obsługiwana przez Stripe."}
+              </p>
+
+              <div className={styles.stripeTrustCards}>
+                <small className={styles.stripeTrustCardsLabel}>
+                  {locale === "en"
+                    ? "Accepted payments"
+                    : "Akceptowane płatności"}
+                </small>
+
+                <div className={styles.stripeTrustCardsIcons} aria-label="Accepted payment cards">
+                  <span className={`${styles.cardIcon} ${styles.visaIcon}`} title="Visa" aria-label="Visa">
+                    <SiVisa />
+                  </span>
+                  <span className={`${styles.cardIcon} ${styles.mastercardIcon}`} title="Mastercard" aria-label="Mastercard">
+                    <SiMastercard />
+                  </span>
+                  <span className={`${styles.cardIcon} ${styles.amexIcon}`} title="American Express" aria-label="American Express">
+                    <SiAmericanexpress />
+                  </span>
+                  <span className={`${styles.cardIcon} ${styles.discoverIcon}`} title="Discover" aria-label="Discover">
+                    <SiDiscover />
+                  </span>
+                  <span className={`${styles.cardIcon} ${styles.dinersIcon}`} title="Diners Club" aria-label="Diners Club">
+                    <SiDinersclub />
+                  </span>
+                  <span className={`${styles.cardIcon} ${styles.jcbIcon}`} title="JCB" aria-label="JCB">
+                    <SiJcb />
+                  </span>
+                  <span className={styles.paymentLogo} title="BLIK" aria-label="BLIK">
+                    <img src="/tokama/payments/blik.svg" alt="BLIK" />
+                  </span>
+                  <span className={styles.paymentLogo} title="Klarna" aria-label="Klarna">
+                    <img src="/tokama/payments/klarna.svg" alt="Klarna" />
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <a
+              href="https://stripe.com"
+              target="_blank"
+              rel="noreferrer"
+              aria-label="Powered by Stripe"
+              className={styles.stripeBadgeLink}
+            >
+              <img
+                src="/tokama/stripe/powered-by-stripe.svg"
+                alt="Powered by Stripe"
+              />
+            </a>
+          </div>
+
+          {submitStatus === "error" && (
+            <p className={styles.warning}>{submitErrorMessage || t.error}</p>
+          )}
+        </form>
+      </section>
+
+      {availabilityModalOpen ? (
+        <div className={styles.availabilityOverlay} role="dialog" aria-modal="true">
+          <div className={styles.availabilityModal}>
+            <button
+              type="button"
+              className={styles.availabilityClose}
+              onClick={() => setAvailabilityModalOpen(false)}
+              aria-label="Close"
+            >
+              ×
+            </button>
+
+            <p className={styles.availabilityKicker}>
+              {locale === "en" ? "Availability" : "Dostępność"}
+            </p>
+
+            <h2>
+              {locale === "en"
+                ? "This date is no longer available."
+                : "Ten termin nie jest już dostępny."}
+            </h2>
+
+            <p>
+              {locale === "en"
+                ? "Choose one of the nearest available dates below."
+                : "Wybierz jeden z najbliższych dostępnych terminów poniżej."}
+            </p>
+
+            <div className={styles.availabilityDates}>
+              {availabilitySuggestions.map((suggestion) => (
+                <button
+                  key={`${suggestion.checkin}-${suggestion.checkout}`}
+                  type="button"
+                  className={styles.availabilityDate}
+                  onClick={() => {
+                    setCheckin(suggestion.checkin);
+                    setCheckout(suggestion.checkout);
+                    setAvailabilityModalOpen(false);
+                    setSubmitStatus("idle");
+                    setSubmitErrorMessage(null);
+                  }}
+                >
+                  <span>
+                    {formatDate(suggestion.checkin)} — {formatDate(suggestion.checkout)}
+                  </span>
+                  <strong>{locale === "en" ? "Choose" : "Wybierz"}</strong>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : null}
+    </main>
+  );
+}

@@ -1,0 +1,345 @@
+.wrap {
+  display: grid;
+  gap: 12px;
+}
+
+.selectedDates {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.selectedDate {
+  min-height: 82px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 17px 18px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.13);
+  border-radius: 24px;
+}
+
+.selectedDate span {
+  margin-bottom: 10px;
+  color: rgba(0, 0, 0, 0.48);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+}
+
+.selectedDate strong {
+  font-size: 16px;
+  line-height: 1.25;
+  letter-spacing: -0.035em;
+  font-weight: 450;
+}
+
+.calendar {
+  padding: 18px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.13);
+  border-radius: 28px;
+}
+
+.calendarHeader {
+  display: grid;
+  grid-template-columns: 42px 1fr 42px;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+.calendarHeader p {
+  margin: 0;
+  text-align: center;
+  color: rgba(0, 0, 0, 0.52);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.calendarHeader button {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  color: #000000;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 15px;
+  transition:
+    background-color 260ms ease,
+    color 260ms ease,
+    border-color 260ms ease;
+}
+
+.calendarHeader button:hover {
+  color: #ffffff;
+  background: #000000;
+  border-color: #000000;
+}
+
+.months {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+
+.month h3 {
+  margin: 0 0 16px;
+  text-align: center;
+  font-size: 18px;
+  line-height: 1;
+  letter-spacing: -0.045em;
+  font-weight: 420;
+  text-transform: lowercase;
+}
+
+.week,
+.days {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 5px;
+}
+
+.week {
+  margin-bottom: 8px;
+}
+
+.week span {
+  display: grid;
+  place-items: center;
+  height: 24px;
+  color: rgba(0, 0, 0, 0.42);
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.empty {
+  height: 38px;
+}
+
+.day {
+  position: relative;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: #000000;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: var(--font-sans), Arial, sans-serif;
+  font-size: 13px;
+  line-height: 1;
+  transition:
+    background-color 220ms ease,
+    color 220ms ease,
+    opacity 220ms ease;
+}
+
+.day span { position: relative; z-index: 1; }
+.day i { position: absolute; right: 4px; bottom: 3px; width: 5px; height: 5px; border-radius: 50%; background: currentColor; content: ""; }
+.day.calm { color: #356247; background: #edf4ee; }
+.day.popular { color: #805e18; background: #f8f0d8; }
+.day.hot { color: #8d302b; background: #f7e3e1; }
+.day.calm:hover:not(:disabled) { background: #dcebdd; }
+.day.popular:hover:not(:disabled) { background: #f0e1b6; }
+.day.hot:hover:not(:disabled) { background: #efcbc7; }
+
+.day:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.day:disabled {
+  cursor: not-allowed;
+  opacity: 0.18;
+}
+
+.range {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+.start,
+.end {
+  color: #ffffff;
+  background: #000000;
+}
+
+.start:hover:not(:disabled),
+.end:hover:not(:disabled) {
+  color: #ffffff;
+  background: #000000;
+}
+
+.footer {
+  display: flex;
+  justify-content: center;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  gap: 18px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.footer span {
+  color: rgba(0, 0, 0, 0.5);
+  font-size: 10px;
+  line-height: 1;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.legend { display: flex; align-items: center; justify-content: center; gap: 14px; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; color: rgba(17,17,17,.58); font-size: 9px; letter-spacing: .08em; }
+.legend i { width: 8px; height: 8px; border-radius: 50%; }
+.legend i.calm { background: #6e9a79; }
+.legend i.popular { background: #c89a38; }
+.legend i.hot { background: #c4544e; }
+
+@media (max-width: 780px) {
+  .selectedDates {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar {
+    padding: 14px;
+    border-radius: 24px;
+  }
+
+  .months {
+    grid-template-columns: 1fr;
+  }
+
+  .months .month:nth-child(2) {
+    display: none;
+  }
+
+  .day {
+    height: 40px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .calendarHeader button,
+  .day {
+    transition: none;
+  }
+}
+
+
+/* TOKAMA calendar — visual layer only */
+.wrap {
+  gap: 16px;
+}
+
+.selectedDates {
+  gap: 14px;
+}
+
+.selectedDate {
+  min-height: 78px;
+  padding: 16px 0;
+  border: 0;
+  border-bottom: 1px solid rgba(17, 17, 17, 0.32);
+  border-radius: 0;
+  background: #fff;
+}
+
+.selectedDate span {
+  color: rgba(17, 17, 17, 0.55);
+}
+
+.selectedDate strong {
+  color: #111;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.calendar {
+  padding: 26px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+}
+
+.calendarHeader {
+  grid-template-columns: 36px 1fr 36px;
+  margin-bottom: 26px;
+}
+
+.calendarHeader p {
+  color: rgba(17, 17, 17, 0.58);
+}
+
+.calendarHeader button {
+  width: 36px;
+  height: 36px;
+  border-color: rgba(17, 17, 17, 0.32);
+  border-radius: 0;
+}
+
+.calendarHeader button:hover {
+  color: #fff;
+  border-color: #111;
+  background: #111;
+}
+
+.months {
+  gap: 30px;
+}
+
+.month h3 {
+  color: #111;
+  font-family: Georgia, serif;
+  font-size: 19px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  text-transform: none;
+}
+
+.week span {
+  color: rgba(17, 17, 17, 0.48);
+}
+
+.day {
+  color: #111;
+  border-radius: 0;
+}
+
+.day:hover:not(:disabled),
+.range {
+  background: rgba(17, 17, 17, 0.08);
+}
+
+.start,
+.end,
+.start:hover:not(:disabled),
+.end:hover:not(:disabled) {
+  color: #fff;
+  background: #111;
+}
+.day.start i, .day.end i { background: #fff; }
+
+.footer {
+  border-top-color: rgba(17, 17, 17, 0.24);
+}
+
+.footer span {
+  color: rgba(17, 17, 17, 0.58);
+}
+
+@media (max-width: 780px) {
+  .calendar {
+    padding-top: 22px;
+    border-radius: 0;
+  }
+}

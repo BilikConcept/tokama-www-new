@@ -1,0 +1,102 @@
+import type { Metadata } from "next";
+import { TokamaHero } from "@/components/tokama/TokamaHero";
+import { TokamaIntro } from "@/components/tokama/TokamaIntro";
+import { TokamaHouses } from "@/components/tokama/TokamaHouses";
+import { TokamaRelax } from "@/components/tokama/TokamaRelax";
+import { TokamaMediaBreak } from "@/components/tokama/TokamaMediaBreak";
+import { TokamaLake } from "@/components/tokama/TokamaLake";
+import { TokamaTable } from "@/components/tokama/TokamaTable";
+import { TokamaEvents } from "@/components/tokama/TokamaEvents";
+import { TokamaJournal } from "@/components/tokama/TokamaJournal";
+import { TokamaFinalBooking } from "@/components/tokama/TokamaFinalBooking";
+import { TokamaFooter } from "@/components/tokama/TokamaFooter";
+
+export const metadata: Metadata = {
+  title: "Tokama — domki nad jeziorem blisko Iławy",
+  description:
+    "Tokama to prywatne domki nad jeziorem w otoczeniu natury. Spokojny pobyt, sauna, śniadania, jezioro i przestrzeń do odpoczynku.",
+  alternates: {
+    canonical: "/",
+    languages: {
+      pl: "/",
+      en: "/en",
+    },
+  },
+};
+
+export default function HomePage() {
+  return (
+    <main>
+      <TokamaHero locale="pl" />
+      <TokamaIntro locale="pl" />
+
+      <TokamaMediaBreak
+        locale="pl"
+        image="/images/tokama-media-01.jpg"
+        labelPl="Domki"
+        labelEn="Houses"
+        titlePl={<>Przestrzeń na <em>ciszę</em>.</>}
+        titleEn={<>Space for <em>stillness</em>.</>}
+      />
+
+      <TokamaHouses locale="pl" />
+
+      <TokamaMediaBreak
+        locale="pl"
+        image="/images/tokama-media-02.jpg"
+        labelPl="Relaks"
+        labelEn="Relax"
+        titlePl={<>Woda, ciepło i <em>spokój</em>.</>}
+        titleEn={<>Water, warmth and <em>calm</em>.</>}
+      />
+
+      <TokamaRelax locale="pl" />
+
+      <TokamaMediaBreak
+        locale="pl"
+        image="/images/tokama-media-03.jpg"
+        labelPl="Okolica"
+        labelEn="Surroundings"
+        titlePl={<>Blisko jeziora, pól i <em>lasu</em>.</>}
+        titleEn={<>Close to the lake, fields and <em>forest</em>.</>}
+      />
+
+      <TokamaLake locale="pl" />
+
+      <TokamaMediaBreak
+        locale="pl"
+        image="/images/tokama-media-04.jpg"
+        labelPl="Poranki"
+        labelEn="Mornings"
+        titlePl={<>Śniadania, które nie potrzebują <em>pośpiechu</em>.</>}
+        titleEn={<>Breakfasts without the need to <em>rush</em>.</>}
+      />
+
+      <TokamaTable locale="pl" />
+
+      <TokamaMediaBreak
+        locale="pl"
+        image="/images/tokama-media-05.jpg"
+        labelPl="Eventy"
+        labelEn="Events"
+        titlePl={<>Spotkania w naturalnej <em>oprawie</em>.</>}
+        titleEn={<>Gatherings in a natural <em>setting</em>.</>}
+      />
+
+      <TokamaEvents locale="pl" />
+
+      <TokamaMediaBreak
+        locale="pl"
+        image="/images/tokama-media-06.jpg"
+        labelPl="Journal"
+        labelEn="Journal"
+        titlePl={<>Historie pisane <em>spokojem</em>.</>}
+        titleEn={<>Stories written in <em>stillness</em>.</>}
+      />
+
+      <TokamaJournal locale="pl" />
+      <TokamaFinalBooking locale="pl" />
+      <TokamaFooter locale="pl" />
+    </main>
+  );
+}

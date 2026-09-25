@@ -1,0 +1,119 @@
+.banner {
+  position: fixed;
+  z-index: 9999;
+  right: 24px;
+  bottom: 24px;
+  display: grid;
+  grid-template-columns: minmax(0, 410px) auto;
+  gap: 28px;
+  width: min(calc(100vw - 48px), 680px);
+  padding: 22px;
+  border: 1px solid #111;
+  color: #111;
+  background: #fff;
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.12);
+}
+
+.copy {
+  min-width: 0;
+}
+
+.copy strong {
+  display: block;
+  font-family: Georgia, serif;
+  font-size: 21px;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
+
+.copy p {
+  margin: 10px 0 0;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.links a {
+  padding-bottom: 2px;
+  border-bottom: 1px solid currentColor;
+  color: inherit;
+  font-size: 12px;
+  text-decoration: none;
+}
+
+.actions {
+  display: grid;
+  align-content: end;
+  gap: 8px;
+}
+
+.actions button {
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid #111;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: color 220ms ease, background 220ms ease;
+}
+
+.primary {
+  color: #fff;
+  background: #111;
+}
+
+.primary:hover {
+  color: #111;
+  background: #fff;
+}
+
+.secondary {
+  color: #111;
+  background: #fff;
+}
+
+.secondary:hover {
+  color: #fff;
+  background: #111;
+}
+
+@media (max-width: 620px) {
+  .banner {
+    right: 12px;
+    bottom: 12px;
+    grid-template-columns: 1fr;
+    gap: 18px;
+    width: calc(100vw - 24px);
+    padding: 18px;
+  }
+
+  .actions {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+
+/* Cookie banner: central modal */
+.banner {
+  top: 50%;
+  right: auto;
+  bottom: auto;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+@media (max-width: 620px) {
+  .banner {
+    top: 50%;
+    right: auto;
+    bottom: auto;
+    left: 50%;
+    transform: translate(-50%, -50%);
+  }
+}

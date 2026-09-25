@@ -1,0 +1,552 @@
+import Image from "next/image";
+import Link from "next/link";
+import styles from "./TokamaHomepage.module.css";
+
+export type TokamaLocale = "pl" | "en";
+
+const bookingPage = "https://www.booking.com/hotel/pl/tokama.pl.html";
+const googleReviews = "https://www.google.com/search?q=TOKAMA+Windyki+opinie";
+
+const content = {
+  pl: {
+    nav: [
+      { label: "Domki", href: "#domki" },
+      { label: "Relaks", href: "#relaks" },
+      { label: "Opinie", href: "#opinie" },
+      { label: "Eventy", href: "#eventy" },
+    ],
+    hero: {
+      eyebrow: "Windyki koło Iławy",
+      lead: "Zaledwie trzy",
+      emphasis: "domki",
+      end: "nad jeziorem.",
+      text:
+        "TOKAMA to kameralny adres blisko Iławy — trzy całoroczne domki stworzone dla spokojnych pobytów blisko natury.",
+      primary: "Rezerwuj",
+      secondary: "Zobacz domki",
+      facts: [
+        { value: "3", label: "domki" },
+        { value: "7", label: "dorosłych osób w każdym" },
+        { value: "TO / KA / MA", label: "trzy osobne miejsca" },
+      ],
+    },
+    overview: {
+      label: "TOKAMA w skrócie",
+      title: "Mniej domków. Więcej miejsca na swój rytm.",
+      text:
+        "Nie jesteśmy dużym resortem ani anonimowym wynajmem. To trzy domki, jezioro, pola i las — dla tych, którzy chcą zwolnić na własnych zasadach.",
+      items: [
+        "Windyki, 6 km od Iławy",
+        "Pobyt przez cały rok",
+        "Rezerwacje bezpośrednie online",
+      ],
+    },
+    homes: {
+      label: "Domki",
+      title: "TO, KA i MA. Każdy gotowy na pobyt do 7 dorosłych osób.",
+      text:
+        "Każdy domek ma dwie sypialnie, część dzienną z aneksem kuchennym, łazienkę, własny taras i parking. Dzieci są mile widziane i nie są wliczane do limitu 7 dorosłych osób.",
+      specs: [
+        { label: "Układ", value: "2 sypialnie + część dzienna" },
+        { label: "Kuchnia", value: "pełne wyposażenie, zmywarka i piekarnik" },
+        { label: "Komfort", value: "klimatyzacja i ogrzewanie podłogowe" },
+        { label: "Łazienka", value: "prysznic, suszarka i pralka" },
+      ],
+      amenities: [
+        "Bezpłatne Wi-Fi",
+        "Telewizor z płaskim ekranem",
+        "Prywatny taras",
+        "Własne miejsce parkingowe",
+        "Lodówka, płyta i komplet naczyń",
+        "Dostęp do strefy relaksu",
+      ],
+      rules: [
+        "Zameldowanie od 16:00",
+        "Wymeldowanie do 11:00",
+        "Zwierzęta są akceptowane",
+      ],
+      cta: "Wybierz termin pobytu",
+      imageAlt: "Jeden z domków TOKAMA",
+    },
+    relax: {
+      label: "Strefa relaksu",
+      title: "Woda, ciepło i czas bez planu.",
+      text:
+        "Strefa relaksu jest wspólna dla gości wszystkich trzech domków i wliczona w cenę pobytu. Dzięki temu od razu wiesz, czego się spodziewać — bez ukrytych dopłat.",
+      details: [
+        { value: "Basen i jacuzzi", label: "w sezonie letnim" },
+        { value: "Sauna", label: "w chłodniejszych miesiącach" },
+        { value: "W cenie pobytu", label: "bez dodatkowych opłat" },
+        { value: "Wspólna strefa", label: "dla gości TOKAMY" },
+      ],
+      imageAlt: "Strefa basenowa TOKAMA",
+    },
+    reviews: {
+      label: "Opinie gości",
+      title: "Potwierdzone przez tych, którzy już tu byli.",
+      bookingLabel: "Booking.com",
+      bookingScore: "9,8/10",
+      bookingNote: "na podstawie 8 zweryfikowanych opinii",
+      googleLabel: "Google",
+      googleScore: "Aktualne opinie",
+      googleNote: "zobacz bieżącą ocenę i rekomendacje gości",
+      quotes: [
+        "Piękne nowe domki, bardzo łatwy dojazd.",
+        "Ładne, przestronne domki, duże pokoje.",
+      ],
+    },
+    events: {
+      label: "Eventy w TOKAMIE",
+      title: "Kameralne wydarzenia, które mają własną oprawę.",
+      text:
+        "Sala bankietowa TOKAMA pozwala organizować spotkania, celebracje i wydarzenia do 40 osób — z noclegiem dla uczestników w trzech domkach.",
+      features: [
+        "Sala bankietowa do 40 osób",
+        "Nagłośnienie na miejscu",
+        "W pełni wyposażona kuchnia",
+        "Catering dobierany do formatu wydarzenia",
+        "Noclegi dla maksymalnie 21 dorosłych osób",
+      ],
+      formTitle: "Zapytaj o swój termin",
+      formText:
+        "Opisz wydarzenie, a przygotujemy propozycję dopasowaną do liczby gości, noclegów i potrzeb organizacyjnych.",
+      typeLabel: "Rodzaj wydarzenia",
+      dateLabel: "Planowany termin",
+      guestsLabel: "Liczba gości",
+      contactLabel: "E-mail lub telefon",
+      messageLabel: "Kilka słów o wydarzeniu",
+      submit: "Wyślij zapytanie",
+      direct: "Możesz też napisać bezpośrednio na kontakt@tokama.pl",
+      imageAlt: "Przestrzeń eventowa TOKAMA",
+    },
+    footer: {
+      booking: "Rezerwuj pobyt",
+      contact: "Kontakt",
+      address: "Windyki 116, 14-200 Iława",
+      phone: "+48 604 811 474",
+      email: "kontakt@tokama.pl",
+      note: "TOKAMA — pobyt bliżej spokoju.",
+    },
+  },
+  en: {
+    nav: [
+      { label: "Cottages", href: "#domki" },
+      { label: "Relax", href: "#relaks" },
+      { label: "Reviews", href: "#opinie" },
+      { label: "Events", href: "#eventy" },
+    ],
+    hero: {
+      eyebrow: "Windyki, near Iława",
+      lead: "Just three",
+      emphasis: "cottages",
+      end: "by the lake.",
+      text:
+        "TOKAMA is an intimate address near Iława — three year-round cottages created for quieter stays close to nature.",
+      primary: "Book",
+      secondary: "See the cottages",
+      facts: [
+        { value: "3", label: "cottages" },
+        { value: "7", label: "adults in each cottage" },
+        { value: "TO / KA / MA", label: "three separate places" },
+      ],
+    },
+    overview: {
+      label: "TOKAMA at a glance",
+      title: "Fewer cottages. More room for your own rhythm.",
+      text:
+        "We are not a large resort or an anonymous rental. Just three cottages, a lake, fields and forest — for those who want to slow down on their own terms.",
+      items: [
+        "Windyki, 6 km from Iława",
+        "Stays all year round",
+        "Direct online booking",
+      ],
+    },
+    homes: {
+      label: "The cottages",
+      title: "TO, KA and MA. Each ready for up to 7 adult guests.",
+      text:
+        "Every cottage includes two bedrooms, a living area with kitchenette, bathroom, private terrace and parking. Children are welcome and are not included in the seven-adult limit.",
+      specs: [
+        { label: "Layout", value: "2 bedrooms + living area" },
+        { label: "Kitchen", value: "fully equipped with dishwasher and oven" },
+        { label: "Comfort", value: "air conditioning and underfloor heating" },
+        { label: "Bathroom", value: "shower, hairdryer and washing machine" },
+      ],
+      amenities: [
+        "Complimentary Wi-Fi",
+        "Flat-screen TV",
+        "Private terrace",
+        "Private parking space",
+        "Fridge, cooktop and complete tableware",
+        "Access to the relaxation area",
+      ],
+      rules: [
+        "Check-in from 4:00 PM",
+        "Check-out by 11:00 AM",
+        "Pets are welcome",
+      ],
+      cta: "Choose your stay dates",
+      imageAlt: "One of the TOKAMA cottages",
+    },
+    relax: {
+      label: "Relaxation area",
+      title: "Water, warmth and time without a plan.",
+      text:
+        "The relaxation area is shared by guests of all three cottages and included in the stay. You know exactly what to expect — without additional charges.",
+      details: [
+        { value: "Pool and hot tub", label: "during the summer season" },
+        { value: "Sauna", label: "during colder months" },
+        { value: "Included in your stay", label: "without extra charges" },
+        { value: "Shared area", label: "for TOKAMA guests" },
+      ],
+      imageAlt: "TOKAMA pool area",
+    },
+    reviews: {
+      label: "Guest reviews",
+      title: "Confirmed by the people who have already stayed.",
+      bookingLabel: "Booking.com",
+      bookingScore: "9.8/10",
+      bookingNote: "based on 8 verified guest reviews",
+      googleLabel: "Google",
+      googleScore: "Current reviews",
+      googleNote: "see the latest guest rating and recommendations",
+      quotes: [
+        "Beautiful new cottages and very easy access.",
+        "Lovely, spacious cottages with large rooms.",
+      ],
+    },
+    events: {
+      label: "Events at TOKAMA",
+      title: "Intimate events with their own setting.",
+      text:
+        "TOKAMA's banquet space can host meetings, celebrations and events for up to 40 people — with accommodation in all three cottages.",
+      features: [
+        "Banquet space for up to 40 guests",
+        "On-site sound system",
+        "Fully equipped kitchen",
+        "Catering tailored to your event format",
+        "Accommodation for up to 21 adults",
+      ],
+      formTitle: "Ask about your date",
+      formText:
+        "Tell us about your event and we will prepare an outline based on your guest count, accommodation and organisational needs.",
+      typeLabel: "Event type",
+      dateLabel: "Preferred date",
+      guestsLabel: "Number of guests",
+      contactLabel: "E-mail or phone",
+      messageLabel: "Tell us a little more",
+      submit: "Send an enquiry",
+      direct: "You can also write directly to kontakt@tokama.pl",
+      imageAlt: "TOKAMA event space",
+    },
+    footer: {
+      booking: "Book your stay",
+      contact: "Contact",
+      address: "Windyki 116, 14-200 Iława, Poland",
+      phone: "+48 604 811 474",
+      email: "kontakt@tokama.pl",
+      note: "TOKAMA — a stay closer to stillness.",
+    },
+  },
+} as const;
+
+function Arrow() {
+  return <span className={styles.arrow} aria-hidden="true">↗</span>;
+}
+
+export function TokamaHomepage({ locale }: { locale: TokamaLocale }) {
+  const t = content[locale];
+  const bookingHref = locale === "pl" ? "/rezerwacja" : "/en/book";
+  const languageHref = locale === "pl" ? "/en" : "/";
+  const languageLabel = locale === "pl" ? "EN" : "PL";
+
+  return (
+    <main className={styles.page}>
+      <header className={styles.header}>
+        <Link href={locale === "pl" ? "/" : "/en"} className={styles.logo} aria-label="TOKAMA">
+          TOKAMA
+        </Link>
+
+        <nav className={styles.nav} aria-label="Main navigation">
+          {t.nav.map((item) => (
+            <a key={item.href} href={item.href}>
+              {item.label}
+            </a>
+          ))}
+        </nav>
+
+        <div className={styles.headerActions}>
+          <Link href={languageHref} className={styles.language}>
+            {languageLabel}
+          </Link>
+          <Link href={bookingHref} className={styles.headerBook}>
+            {locale === "pl" ? "Rezerwuj" : "Book"}
+          </Link>
+        </div>
+      </header>
+
+      <section className={styles.hero} aria-label="TOKAMA">
+        <div className={styles.heroMedia} aria-hidden="true">
+          <Image
+            src="/images/tokama-hero-poster.jpg"
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className={styles.heroImage}
+          />
+          <video
+            className={styles.heroVideo}
+            autoPlay
+            muted
+            loop
+            playsInline
+            poster="/images/tokama-hero-poster.jpg"
+          >
+            <source src="/desktop/main-hero.mov" type="video/quicktime" />
+          </video>
+          <div className={styles.heroShade} />
+        </div>
+
+        <div className={styles.heroContent}>
+          <p className={styles.eyebrow}>{t.hero.eyebrow}</p>
+          <h1>
+            {t.hero.lead} <em>{t.hero.emphasis}</em>
+            <br />
+            {t.hero.end}
+          </h1>
+          <div className={styles.heroLinks}>
+            <Link href={bookingHref} className={styles.primaryLink}>
+              {t.hero.primary} <Arrow />
+            </Link>
+            <a href="#domki" className={styles.secondaryLink}>
+              {t.hero.secondary} <Arrow />
+            </a>
+          </div>
+        </div>
+
+      </section>
+
+      <section className={styles.overview}>
+        <div className={styles.container}>
+          <div className={styles.overviewGrid}>
+            <p className={styles.eyebrowDark}>{t.overview.label}</p>
+            <h2>{t.overview.title}</h2>
+            <div className={styles.overviewRight}>
+              <p>{t.overview.text}</p>
+              <ul>
+                {t.overview.items.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="domki" className={styles.homes}>
+        <div className={styles.container}>
+          <div className={styles.sectionIntro}>
+            <p className={styles.eyebrowDark}>{t.homes.label}</p>
+            <h2>{t.homes.title}</h2>
+          </div>
+
+          <div className={styles.homesGrid}>
+            <div className={styles.imageFrameTall}>
+              <Image
+                src="/images/tokama-media-01.jpg"
+                alt={t.homes.imageAlt}
+                fill
+                sizes="(max-width: 900px) 100vw, 50vw"
+                className={styles.cover}
+              />
+            </div>
+
+            <div className={styles.homeDetails}>
+              <p className={styles.sectionText}>{t.homes.text}</p>
+
+              <dl className={styles.specList}>
+                {t.homes.specs.map((item) => (
+                  <div key={item.label}>
+                    <dt>{item.label}</dt>
+                    <dd>{item.value}</dd>
+                  </div>
+                ))}
+              </dl>
+
+              <div className={styles.amenities}>
+                <p>{locale === "pl" ? "W każdym domku" : "In every cottage"}</p>
+                <ul>
+                  {t.homes.amenities.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+
+              <ul className={styles.rules}>
+                {t.homes.rules.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+
+              <Link href={bookingHref} className={styles.darkLink}>
+                {t.homes.cta} <Arrow />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="relaks" className={styles.relax}>
+        <div className={styles.relaxMedia}>
+          <Image
+            src="/images/tokama-media-02.jpg"
+            alt={t.relax.imageAlt}
+            fill
+            sizes="100vw"
+            className={styles.cover}
+          />
+          <div className={styles.relaxShade} />
+        </div>
+
+        <div className={styles.container}>
+          <div className={styles.relaxGrid}>
+            <div>
+              <p className={styles.eyebrow}>{t.relax.label}</p>
+              <h2>{t.relax.title}</h2>
+            </div>
+
+            <div>
+              <p className={styles.relaxText}>{t.relax.text}</p>
+              <dl className={styles.relaxFacts}>
+                {t.relax.details.map((item) => (
+                  <div key={item.label}>
+                    <dt>{item.value}</dt>
+                    <dd>{item.label}</dd>
+                  </div>
+                ))}
+              </dl>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="opinie" className={styles.reviews}>
+        <div className={styles.container}>
+          <div className={styles.reviewHeading}>
+            <div>
+              <p className={styles.eyebrowDark}>{t.reviews.label}</p>
+              <h2>{t.reviews.title}</h2>
+            </div>
+
+            <a href={googleReviews} target="_blank" rel="noreferrer" className={styles.googleLink}>
+              {t.reviews.googleLabel} — {t.reviews.googleNote} <Arrow />
+            </a>
+          </div>
+
+          <div className={styles.reviewMeta}>
+            <div>
+              <p>{t.reviews.bookingLabel}</p>
+              <strong>{t.reviews.bookingScore}</strong>
+            </div>
+            <p>{t.reviews.bookingNote}</p>
+            <a href={bookingPage} target="_blank" rel="noreferrer">
+              {locale === "pl" ? "Przeczytaj opinie" : "Read reviews"} <Arrow />
+            </a>
+          </div>
+
+          <div className={styles.reviewQuotes}>
+            {t.reviews.quotes.map((quote, index) => (
+              <blockquote key={quote}>
+                <span>0{index + 1}</span>
+                <p>“{quote}”</p>
+                <cite>Booking.com</cite>
+              </blockquote>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="eventy" className={styles.events}>
+        <div className={styles.container}>
+          <div className={styles.eventsTop}>
+            <div>
+              <p className={styles.eyebrowDark}>{t.events.label}</p>
+              <h2>{t.events.title}</h2>
+            </div>
+            <p>{t.events.text}</p>
+          </div>
+
+          <div className={styles.eventsGrid}>
+            <div className={styles.imageFrameEvent}>
+              <Image
+                src="/images/tokama-media-05.jpg"
+                alt={t.events.imageAlt}
+                fill
+                sizes="(max-width: 900px) 100vw, 50vw"
+                className={styles.cover}
+              />
+            </div>
+
+            <ul className={styles.eventFeatures}>
+              {t.events.features.map((item, index) => (
+                <li key={item}>
+                  <span>0{index + 1}</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className={styles.bookingPrompt}>
+            <div>
+              <p className={styles.eyebrowDark}>
+                {locale === "pl" ? "Rezerwacje online" : "Online booking"}
+              </p>
+              <h3>
+                {locale === "pl"
+                  ? "Sprawdź dostępność domków w wybranym terminie."
+                  : "Check cottage availability for your preferred dates."}
+              </h3>
+            </div>
+
+            <div>
+              <p>
+                {locale === "pl"
+                  ? "Nasz system pokaże dostępne terminy, liczbę domków i pełną cenę pobytu."
+                  : "Our booking system will show available dates, cottage availability and the full stay price."}
+              </p>
+
+              <Link href={bookingHref} className={styles.bookingPromptLink}>
+                {locale === "pl" ? "Przejdź do rezerwacji" : "Go to booking"} <Arrow />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer id="kontakt" className={styles.footer}>
+        <div className={styles.container}>
+          <div className={styles.footerGrid}>
+            <div>
+              <p className={styles.footerLogo}>TOKAMA</p>
+              <p>{t.footer.note}</p>
+            </div>
+
+            <div>
+              <p>{t.footer.contact}</p>
+              <a href="tel:+48604811474">{t.footer.phone}</a>
+              <a href="mailto:kontakt@tokama.pl">{t.footer.email}</a>
+              <span>{t.footer.address}</span>
+            </div>
+
+            <Link href={bookingHref} className={styles.footerBook}>
+              {t.footer.booking} <Arrow />
+            </Link>
+          </div>
+        </div>
+      </footer>
+    </main>
+  );
+}
+

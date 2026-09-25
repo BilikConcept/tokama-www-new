@@ -1,0 +1,12 @@
+import type { Metadata } from "next";
+import { TokamaEventsPage } from "../../components/tokama-events/TokamaEventsPage";
+
+export const metadata: Metadata = {
+  title: "Eventy w TOKAMA | sala bankietowa koło Iławy",
+  description:
+    "Kameralne eventy, przyjęcia i spotkania firmowe w TOKAMA w Windykach koło Iławy. Sala dla maksymalnie 40 osób, noclegi i spokojna oprawa nad jeziorem.",
+};
+
+export default function EventsPage() {
+  return <TokamaEventsPage locale="pl" />;
+}

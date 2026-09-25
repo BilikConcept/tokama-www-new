@@ -1,0 +1,181 @@
+"use client";
+
+import { FormEvent, useMemo, useState } from "react";
+import { Elements, PaymentElement, useElements, useStripe } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import styles from "./TokamaPaymentPage.module.css";
+
+type PaymentClientProps = {
+  publishableKey: string;
+  clientSecret: string;
+  publicCode: string;
+  guestName: string;
+  amountLabel: string;
+  reservationDates: string;
+};
+
+function PaymentForm({
+  publicCode,
+  guestName,
+  amountLabel,
+  reservationDates,
+}: Omit<PaymentClientProps, "publishableKey" | "clientSecret">) {
+  const stripe = useStripe();
+  const elements = useElements();
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!stripe || !elements) return;
+
+    setStatus("loading");
+    setErrorMessage("");
+
+    const result = await stripe.confirmPayment({
+      elements,
+      redirect: "if_required",
+    });
+
+    if (result.error) {
+      setStatus("error");
+      setErrorMessage(result.error.message || "Nie udało się zrealizować płatności.");
+      return;
+    }
+
+    if (result.paymentIntent?.status === "succeeded") {
+      setStatus("success");
+      return;
+    }
+
+    setStatus("idle");
+  }
+
+  if (status === "success") {
+    return (
+      <section className={styles.successScreen}>
+        <div className={styles.successCard}>
+          <div className={styles.successMark}>
+            <span />
+          </div>
+
+          <p className={styles.eyebrow}>TOKAMA</p>
+          <h1>
+            Płatność <em>przyjęta</em>
+          </h1>
+
+          <div className={styles.successReservationCode}>
+            <span>Numer rezerwacji</span>
+            <strong>{publicCode}</strong>
+          </div>
+
+          <p>
+            Dziękujemy. Twoja płatność została przyjęta, a rezerwacja jest teraz
+            potwierdzona.
+          </p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className={styles.card}>
+      <div className={styles.summary}>
+        <p className={styles.eyebrow}>TOKAMA</p>
+        <h1>Płatność za <em>pobyt</em></h1>
+
+        <div className={styles.meta}>
+          <div>
+            <span>Rezerwacja</span>
+            <strong>{publicCode}</strong>
+          </div>
+          <div>
+            <span>Gość</span>
+            <strong>{guestName}</strong>
+          </div>
+          <div>
+            <span>Termin</span>
+            <strong>{reservationDates}</strong>
+          </div>
+          <div>
+            <span>Kwota</span>
+            <strong>{amountLabel}</strong>
+          </div>
+        </div>
+      </div>
+
+      <form className={styles.form} onSubmit={handleSubmit}>
+        <div className={styles.stripeMobileFix} id="tokama-payment-element-wrap">
+            <PaymentElement />
+          </div>
+
+        {status === "error" ? (
+          <p className={styles.error}>{errorMessage}</p>
+        ) : null}
+
+        <button type="submit" disabled={!stripe || !elements || status === "loading"}>
+          {status === "loading" ? "Przetwarzanie..." : `Zapłać ${amountLabel}`}
+        </button>
+
+        <p className={styles.note}>
+          Płatność obsługiwana jest bezpiecznie przez Stripe. TOKAMA nie przechowuje danych karty.
+        </p>
+      </form>
+    </section>
+  );
+}
+
+export default function TokamaPaymentClient(props: PaymentClientProps) {
+  const stripePromise = useMemo(
+    () => loadStripe(props.publishableKey),
+    [props.publishableKey]
+  );
+
+  return (
+    <Elements
+      stripe={stripePromise}
+      options={{
+        clientSecret: props.clientSecret,
+        appearance: {
+          theme: "flat",
+          variables: {
+            colorPrimary: "#000000",
+            colorText: "#000000",
+            colorTextSecondary: "rgba(0,0,0,0.56)",
+            colorBackground: "#ffffff",
+            colorDanger: "#9f1d1d",
+            borderRadius: "18px",
+            fontFamily: "DM Sans, system-ui, -apple-system, BlinkMacSystemFont, sans-serif",
+            fontSizeBase: "15px",
+            spacingUnit: "5px",
+          },
+          rules: {
+            ".Input": {
+              border: "1px solid rgba(0,0,0,0.14)",
+              boxShadow: "none",
+            },
+            ".Input:focus": {
+              border: "1px solid #000000",
+              boxShadow: "none",
+            },
+            ".Label": {
+              fontSize: "11px",
+              fontWeight: "700",
+              letterSpacing: "0.14em",
+              textTransform: "uppercase",
+              color: "rgba(0,0,0,0.52)",
+            },
+          },
+        },
+      }}
+    >
+      <PaymentForm
+        publicCode={props.publicCode}
+        guestName={props.guestName}
+        amountLabel={props.amountLabel}
+        reservationDates={props.reservationDates}
+      />
+    </Elements>
+  );
+}

@@ -1,0 +1,47 @@
+import type { Metadata } from "next";
+import { TokamaAreaPage } from "../../components/tokama-area/TokamaAreaPage";
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: "/jezioro-jeziorak",
+  },
+
+  title: "Jeziorak i Iława | Domki nad jeziorem TOKAMA",
+  description: "Poznaj Jeziorak, Iławę i możliwości wypoczynku nad wodą podczas pobytu w TOKAMIE.",
+};
+
+export default function JeziorakPage() {
+  return (
+    <TokamaAreaPage
+      eyebrow="Iława · Pojezierze Iławskie"
+      title={<>Dzień nad <em>Jeziorakiem.</em></>}
+      lead="Jeziorak daje przestrzeń na dzień dokładnie taki, jakiego potrzebujesz: aktywny, spokojny albo zupełnie bez planu."
+      sections={[
+        {
+          number: "01",
+          title: "Woda i horyzont",
+          paragraphs: [
+            "Jeziorak jest jednym z najważniejszych miejsc na mapie regionu. Jego długie, zalesione brzegi i liczne zatoki tworzą scenerię do wypoczynku blisko wody.",
+            "To naturalny wybór na rejs, kajaki, rower wodny albo kilka godzin spędzonych bezpośrednio nad jeziorem.",
+          ],
+        },
+        {
+          number: "02",
+          title: "Iława po drodze",
+          paragraphs: [
+            "Pobliska Iława pozwala połączyć dzień w naturze z miejskim spacerem. Port, plaża miejska, promenada i lokalne miejsca na lunch są dobrym pretekstem, by wyjechać z TOKAMY na kilka godzin.",
+            "Potem najprzyjemniej wrócić do Windyk — z dala od pośpiechu i w swoim własnym rytmie.",
+          ],
+        },
+        {
+          number: "03",
+          title: "Aktywnie albo nic",
+          paragraphs: [
+            "Okolice Jezioraka dają wybór: żeglowanie, kajaki, wędkowanie, trasy piesze i rowerowe. Ale równie dobrze można potraktować jezioro jako tło do wolnego dnia.",
+            "W TOKAMIE nie trzeba wybierać między komfortem a naturą. Jedno i drugie jest tu blisko.",
+          ],
+        },
+      ]}
+    />
+  );
+}

@@ -1,0 +1,99 @@
+.section {
+  display: grid;
+  grid-template-columns: minmax(260px, .8fr) minmax(420px, 1.4fr);
+  gap: 7vw;
+  padding: 110px 6vw;
+  border-top: 1px solid rgba(17, 17, 17, .12);
+  background: #fff;
+  color: #111;
+}
+
+.section header > p {
+  margin: 0 0 24px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .18em;
+}
+
+.section h2 {
+  max-width: 620px;
+  margin: 0;
+  font-size: clamp(44px, 5.5vw, 82px);
+  font-weight: 400;
+  line-height: .98;
+  letter-spacing: -.05em;
+  text-wrap: balance;
+}
+
+.items {
+  border-top: 1px solid rgba(17, 17, 17, .2);
+}
+
+.items details {
+  border-bottom: 1px solid rgba(17, 17, 17, .2);
+}
+
+.items summary {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: center;
+  padding: 25px 0;
+  list-style: none;
+  cursor: pointer;
+  font: 400 clamp(19px, 1.8vw, 26px) / 1.25 Georgia, serif;
+}
+
+.items summary::-webkit-details-marker {
+  display: none;
+}
+
+.items summary b {
+  flex: none;
+  font: 400 24px / 1 sans-serif;
+  transition: transform 180ms ease;
+}
+
+.items details[open] summary b {
+  transform: rotate(45deg);
+}
+
+.items details > div {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 260ms ease;
+}
+
+.items details[open] > div {
+  grid-template-rows: 1fr;
+}
+
+.items details > div > p {
+  max-width: 760px;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  color: rgba(17, 17, 17, .68);
+  font: 400 17px / 1.65 Georgia, serif;
+}
+
+.items details[open] > div > p {
+  padding: 0 45px 27px 0;
+}
+
+@media (max-width: 760px) {
+  .section {
+    grid-template-columns: 1fr;
+    gap: 52px;
+    padding: 78px 24px;
+  }
+
+  .section h2 {
+    font-size: clamp(42px, 13vw, 60px);
+  }
+
+  .items summary {
+    padding: 22px 0;
+    font-size: 19px;
+  }
+}

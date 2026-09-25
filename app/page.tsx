@@ -1,65 +1,71 @@
-import Image from "next/image";
+import type { Metadata } from "next";
+import { TokamaHome } from "@/components/tokama-home/TokamaHome";
+import { getActivePackages, getHomepageArticle } from "@/lib/content-studio/public";
+import { blogArticles } from "@/app/blog/data";
 
-export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: {
+    absolute: "Domki całoroczne TOKAMA nad jeziorem - Komfort i relaks",
+  },
+
+  description:
+    "Komfortowe domki całoroczne TOKAMA nad jeziorem, idealne na wakacje i firmowe wyjazdy. Wyposażone w aneks kuchenny, Wi-Fi, saunę, basen i jacuzzi. Zarezerwuj już dziś i ciesz się relaksem przez cały rok!",
+
+  keywords: [
+    "domki całoroczne",
+    "domki nad jeziorem",
+    "wynajem domków",
+    "domki TOKAMA",
+    "komfortowe domki",
+    "basen",
+    "jacuzzi",
+    "sauna",
+    "wypoczynek nad jeziorem",
+    "wyjazdy firmowe",
+    "relaks w domkach",
+  ],
+
+  alternates: {
+    canonical: "/",
+    languages: {
+      "pl-PL": "/",
+      "en-GB": "/en",
+    },
+  },
+
+  openGraph: {
+    title: "Domki całoroczne TOKAMA nad jeziorem - Komfort i relaks",
+    description:
+      "Komfortowe domki całoroczne TOKAMA nad jeziorem, idealne na wakacje i firmowe wyjazdy. Wyposażone w aneks kuchenny, Wi-Fi, saunę, basen i jacuzzi. Zarezerwuj już dziś i ciesz się relaksem przez cały rok!",
+    url: "/",
+    locale: "pl_PL",
+    type: "website",
+  },
+
+  twitter: {
+    card: "summary_large_image",
+    title: "Domki całoroczne TOKAMA nad jeziorem - Komfort i relaks",
+    description:
+      "Komfortowe domki całoroczne TOKAMA nad jeziorem, idealne na wakacje i firmowe wyjazdy. Wyposażone w aneks kuchenny, Wi-Fi, saunę, basen i jacuzzi. Zarezerwuj już dziś i ciesz się relaksem przez cały rok!",
+  },
+};
+
+export default async function HomePage() {
+  const [packages, studioArticle] = await Promise.all([getActivePackages(), getHomepageArticle()]);
+  const fallbackArticle = blogArticles[0];
+  return <TokamaHome locale="pl" packages={packages.slice(0, 4).map(item => ({
+    id: item.id, slug: item.slug, name: item.name, eyebrow: item.eyebrow,
+    shortDescription: item.short_description, priceCents: item.package_price_cents,
+    currency: item.currency, heroUrl: item.hero?.public_url || null,
+    heroKind: item.hero?.kind || null, heroAlt: item.hero?.alt_text || item.name,
+  }))} latestArticle={studioArticle ? {
+    slug: studioArticle.slug, title: studioArticle.title, eyebrow: studioArticle.eyebrow,
+    excerpt: studioArticle.excerpt, coverUrl: studioArticle.cover?.public_url || null,
+    coverKind: studioArticle.cover?.kind || null, coverAlt: studioArticle.cover?.alt_text || studioArticle.title,
+  } : fallbackArticle ? {
+    slug: fallbackArticle.slug, title: fallbackArticle.title, eyebrow: fallbackArticle.category,
+    excerpt: fallbackArticle.description, coverUrl: null, coverKind: null, coverAlt: fallbackArticle.title,
+  } : null} />;
 }

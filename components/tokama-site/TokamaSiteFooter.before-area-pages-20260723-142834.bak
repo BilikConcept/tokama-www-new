@@ -1,0 +1,312 @@
+"use client";
+
+import { useMemo, useState, type FormEvent } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import styles from "../tokama-home/TokamaHome.module.css";
+
+type Locale = "pl" | "en";
+
+const copy = {
+  pl: {
+    dates: "Daty",
+    guests: "Goście",
+    adults: "Dorośli",
+    children: "Dzieci",
+    previousMonth: "Poprzedni miesiąc",
+    nextMonth: "Następny miesiąc",
+    decrease: "Zmniejsz",
+    increase: "Zwiększ",
+    search: "Sprawdź dostępność",
+    chooseDates: "Wybierz daty",
+    footerTitle: <>Zaplanuj pobyt bliżej <em>natury.</em></>,
+    weekDays: ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"],
+  },
+  en: {
+    dates: "Dates",
+    guests: "Guests",
+    adults: "Adults",
+    children: "Children",
+    previousMonth: "Previous month",
+    nextMonth: "Next month",
+    decrease: "Decrease",
+    increase: "Increase",
+    search: "Check availability",
+    chooseDates: "Choose dates",
+    footerTitle: <>Plan a stay closer to <em>nature.</em></>,
+    weekDays: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
+  },
+} as const;
+
+function pad(value: number) {
+  return String(value).padStart(2, "0");
+}
+
+function toDateKey(date: Date) {
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+}
+
+function fromDateKey(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+function startOfMonth(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), 1);
+}
+
+function addMonths(date: Date, amount: number) {
+  return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function calendarDays(month: Date) {
+  const firstWeekday = (month.getDay() + 6) % 7;
+  const daysInMonth = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  const days: Array<Date | null> = Array.from({ length: firstWeekday }, () => null);
+
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    days.push(new Date(month.getFullYear(), month.getMonth(), day));
+  }
+
+  while (days.length % 7 !== 0) {
+    days.push(null);
+  }
+
+  return days;
+}
+
+function formatDate(value: string, locale: Locale) {
+  return fromDateKey(value).toLocaleDateString(locale === "pl" ? "pl-PL" : "en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+function getGuestSummary(adults: number, children: number, locale: Locale) {
+  if (locale === "pl") {
+    return `${adults} dorosł${adults === 1 ? "y" : "ych"} · ${children} dzieci`;
+  }
+
+  return `${adults} adult${adults === 1 ? "" : "s"} · ${children} children`;
+}
+
+export function TokamaSiteFooter({ locale }: { locale: Locale }) {
+  const t = copy[locale];
+  const bookingHref = locale === "pl" ? "/rezerwacja" : "/en/book";
+  const currentMonth = useMemo(() => startOfMonth(new Date()), []);
+  const [viewMonth, setViewMonth] = useState(currentMonth);
+  const [checkin, setCheckin] = useState("");
+  const [checkout, setCheckout] = useState("");
+  const [adults, setAdults] = useState(2);
+  const [children, setChildren] = useState(0);
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [guestsOpen, setGuestsOpen] = useState(false);
+  const [searchError, setSearchError] = useState("");
+
+  const today = toDateKey(new Date());
+  const days = useMemo(() => calendarDays(viewMonth), [viewMonth]);
+
+  const dateSummary =
+    checkin && checkout
+      ? `${formatDate(checkin, locale)} — ${formatDate(checkout, locale)}`
+      : checkin
+        ? formatDate(checkin, locale)
+        : t.chooseDates;
+
+  function selectDate(value: string) {
+    setSearchError("");
+
+    if (!checkin || checkout) {
+      setCheckin(value);
+      setCheckout("");
+      return;
+    }
+
+    if (value <= checkin) {
+      setCheckin(value);
+      return;
+    }
+
+    setCheckout(value);
+    setCalendarOpen(false);
+  }
+
+  function handleSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!checkin || !checkout) {
+      setSearchError(locale === "pl" ? "Wybierz datę przyjazdu i wyjazdu." : "Choose check-in and check-out dates.");
+      return;
+    }
+
+    const params = new URLSearchParams({
+      checkin,
+      checkout,
+      adults: String(adults),
+      children: String(children),
+    });
+
+    window.location.assign(`${bookingHref}?${params.toString()}`);
+  }
+
+  return (
+    <footer className={styles.siteFooter}>
+      <div className={styles.footerBooking}>
+        <div className={styles.footerBookingInner}>
+          <h2 className={styles.footerBookingHeading}>{t.footerTitle}</h2>
+
+          <form id="footer-availability" className={styles.availabilityPanel} onSubmit={handleSearch}>
+            {searchError ? <p className={styles.formError}>{searchError}</p> : null}
+
+            <div className={styles.availabilityField}>
+              <button
+                type="button"
+                className={styles.availabilityTrigger}
+                onClick={() => {
+                  setCalendarOpen((value) => !value);
+                  setGuestsOpen(false);
+                }}
+                aria-expanded={calendarOpen}
+              >
+                <span>{t.dates}</span>
+                <strong>{dateSummary}</strong>
+              </button>
+
+              {calendarOpen ? (
+                <div className={styles.calendarPopover}>
+                  <div className={styles.calendarHeader}>
+                    <button
+                      type="button"
+                      onClick={() => setViewMonth((month) => addMonths(month, -1))}
+                      disabled={viewMonth <= currentMonth}
+                      aria-label={t.previousMonth}
+                    >
+                      ←
+                    </button>
+                    <strong>
+                      {viewMonth.toLocaleDateString(locale === "pl" ? "pl-PL" : "en-GB", {
+                        month: "long",
+                        year: "numeric",
+                      })}
+                    </strong>
+                    <button
+                      type="button"
+                      onClick={() => setViewMonth((month) => addMonths(month, 1))}
+                      aria-label={t.nextMonth}
+                    >
+                      →
+                    </button>
+                  </div>
+
+                  <div className={styles.calendarWeekdays}>
+                    {t.weekDays.map((day) => <span key={day}>{day}</span>)}
+                  </div>
+
+                  <div className={styles.calendarGrid}>
+                    {days.map((day, index) => {
+                      if (!day) {
+                        return <span className={styles.calendarBlank} key={`blank-${index}`} />;
+                      }
+
+                      const value = toDateKey(day);
+                      const isStart = value === checkin;
+                      const isEnd = value === checkout;
+                      const isInRange = Boolean(checkin && checkout && value > checkin && value < checkout);
+
+                      return (
+                        <button
+                          type="button"
+                          key={value}
+                          disabled={value < today}
+                          onClick={() => selectDate(value)}
+                          aria-label={formatDate(value, locale)}
+                          className={[
+                            styles.calendarDay,
+                            isStart ? styles.calendarDayStart : "",
+                            isEnd ? styles.calendarDayEnd : "",
+                            isInRange ? styles.calendarDayRange : "",
+                          ].filter(Boolean).join(" ")}
+                        >
+                          {day.getDate()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div className={styles.availabilityField}>
+              <button
+                type="button"
+                className={styles.availabilityTrigger}
+                onClick={() => {
+                  setGuestsOpen((value) => !value);
+                  setCalendarOpen(false);
+                }}
+                aria-expanded={guestsOpen}
+              >
+                <span>{t.guests}</span>
+                <strong>{getGuestSummary(adults, children, locale)}</strong>
+              </button>
+
+              {guestsOpen ? (
+                <div className={styles.guestsPopover}>
+                  <div className={styles.guestRow}>
+                    <span>{t.adults}</span>
+                    <div>
+                      <button type="button" onClick={() => setAdults((value) => Math.max(1, value - 1))} aria-label={`${t.decrease} ${t.adults}`}>−</button>
+                      <strong>{adults}</strong>
+                      <button type="button" onClick={() => setAdults((value) => Math.min(21, value + 1))} aria-label={`${t.increase} ${t.adults}`}>+</button>
+                    </div>
+                  </div>
+
+                  <div className={styles.guestRow}>
+                    <span>{t.children}</span>
+                    <div>
+                      <button type="button" onClick={() => setChildren((value) => Math.max(0, value - 1))} aria-label={`${t.decrease} ${t.children}`}>−</button>
+                      <strong>{children}</strong>
+                      <button type="button" onClick={() => setChildren((value) => Math.min(30, value + 1))} aria-label={`${t.increase} ${t.children}`}>+</button>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <button type="submit" className={styles.searchButton} aria-label={t.search}>
+              <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <circle cx="10.8" cy="10.8" r="5.8" />
+                <path d="m15.2 15.2 4.3 4.3" />
+              </svg>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div className={styles.footerDetails}>
+        <Link href={locale === "pl" ? "/" : "/en"} className={styles.footerBrand} aria-label="TOKAMA">
+          <Image
+            src="/tokama-logo.svg"
+            alt="TOKAMA"
+            width={220}
+            height={60}
+            className={styles.footerLogoImage}
+          />
+        </Link>
+
+        <div className={styles.footerContact}>
+          <a href="mailto:kontakt@tokama.pl">kontakt@tokama.pl</a>
+          <a href="tel:+48604811474">+48 604 811 474</a>
+          <span>Windyki 116, 14-200 Iława</span>
+        </div>
+
+        <div className={styles.footerLegal}>
+          <Link href="/polityka-prywatnosci">Polityka prywatności</Link>
+          <Link href="/polityka-cookie">Polityka cookie</Link>
+          <span>© {new Date().getFullYear()} TOKAMA</span>
+        </div>
+      </div>
+    </footer>
+  );
+}
