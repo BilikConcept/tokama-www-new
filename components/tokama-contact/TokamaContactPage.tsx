@@ -14,12 +14,17 @@ const content = {
       "Masz pytanie o pobyt, organizację wydarzenia lub dostępne terminy? Napisz albo zadzwoń — chętnie pomożemy.",
     detailsTitle: <>TOKAMA<br />w <em>Windykach.</em></>,
     details: [
-      ["Firma", "TKM GROUP SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ", "#company-data"],
       ["E-mail", "kontakt@tokama.pl", "mailto:kontakt@tokama.pl"],
       ["Telefon", "+48 604 811 474", "tel:+48604811474"],
-      ["Adres siedziby", "Mieszka I 20, 14-200 Iława, Polska", "https://maps.app.goo.gl/nkLn5xqxD4Q2GnaR8"],
+      ["Adres obiektu", "Windyki 116, 14-200 Iława, Polska", "https://maps.app.goo.gl/nkLn5xqxD4Q2GnaR8"],
+    ],
+    companyTitle: <>Dane<br /><em>firmy.</em></>,
+    companyDetails: [
+      ["Nazwa prawna", "TKM GROUP SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ", "#company-data"],
+      ["Adres siedziby", "Mieszka I 20, 14-200 Iława, Polska", "#company-data"],
       ["NIP", "7441830510", "#company-data"],
-      ["KRS / REGON", "0000979657 / 522436791", "#company-data"],
+      ["KRS", "0000979657", "#company-data"],
+      ["REGON", "522436791", "#company-data"],
     ],
     locationTitle: <>Nad jeziorem,<br />blisko <em>Iławy.</em></>,
     locationText:
@@ -33,12 +38,17 @@ const content = {
       "Have a question about a stay, event or available dates? Write or call us — we are happy to help.",
     detailsTitle: <>TOKAMA<br />in <em>Windyki.</em></>,
     details: [
-      ["Company", "TKM GROUP SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ", "#company-data"],
       ["Email", "kontakt@tokama.pl", "mailto:kontakt@tokama.pl"],
       ["Phone", "+48 604 811 474", "tel:+48604811474"],
-      ["Registered office", "Mieszka I 20, 14-200 Iława, Poland", "https://maps.app.goo.gl/nkLn5xqxD4Q2GnaR8"],
+      ["Property address", "Windyki 116, 14-200 Iława, Poland", "https://maps.app.goo.gl/nkLn5xqxD4Q2GnaR8"],
+    ],
+    companyTitle: <>Company<br /><em>details.</em></>,
+    companyDetails: [
+      ["Legal name", "TKM GROUP SPÓŁKA Z OGRANICZONĄ ODPOWIEDZIALNOŚCIĄ", "#company-data"],
+      ["Registered office", "Mieszka I 20, 14-200 Iława, Poland", "#company-data"],
       ["Tax ID (NIP)", "7441830510", "#company-data"],
-      ["KRS / REGON", "0000979657 / 522436791", "#company-data"],
+      ["KRS", "0000979657", "#company-data"],
+      ["REGON", "522436791", "#company-data"],
     ],
     locationTitle: <>By the lake,<br />near <em>Iława.</em></>,
     locationText:
@@ -77,6 +87,17 @@ export function TokamaContactPage({ locale }: Props) {
                 <span>0{index + 1}</span>
                 <span>{label}</span>
                 <strong>{value} <i>↗</i></strong>
+              </a>
+            ))}
+          </div>
+
+          <h2 className={styles.companyTitle}>{t.companyTitle}</h2>
+          <div className={styles.detailList}>
+            {t.companyDetails.map(([label, value, href], index) => (
+              <a key={label} href={href} className={styles.detail}>
+                <span>0{index + 1}</span>
+                <span>{label}</span>
+                <strong>{value}</strong>
               </a>
             ))}
           </div>

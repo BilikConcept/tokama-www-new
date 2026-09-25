@@ -62,6 +62,10 @@
   text-align: center;
 }
 
+.companyTitle {
+  margin-top: clamp(92px, 11vw, 150px) !important;
+}
+
 .detailList {
   margin-top: clamp(58px, 7vw, 88px);
   border-top: 1px solid rgba(17, 17, 17, 0.25);
