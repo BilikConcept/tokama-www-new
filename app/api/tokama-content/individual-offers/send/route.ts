@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   } catch (availabilityError) {
     return NextResponse.json({ message: availabilityError instanceof Error ? availabilityError.message : "Nie udało się sprawdzić dostępności." }, { status: 500 });
   }
-  if (heldHouseIds.length < housesNeeded) return NextResponse.json({ message: "Ten termin nie jest już dostępny dla wymaganej liczby domków. Oferta nie została wysłana." }, { status: 409 });
+  if (heldHouseIds.length < housesNeeded) return NextResponse.json({ message: `Oferta dla ${Number(offer.guests || 1)} gości wymaga ${housesNeeded} ${housesNeeded === 1 ? "domku" : "domków"}, a w całym terminie dostępne są ${heldHouseIds.length}. Sprawdź zajętość każdego domku — wystarczy jedna noc blokady, aby oferta nie mogła objąć całego pobytu.` }, { status: 409 });
   const holdExpiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
   const { error: holdError } = await auth.supabase.from("tokama_individual_offers").update({ held_house_ids: heldHouseIds, hold_expires_at: holdExpiresAt, updated_at: new Date().toISOString() }).eq("id", offer.id);
   if (holdError) return NextResponse.json({ message: holdError.message }, { status: 500 });

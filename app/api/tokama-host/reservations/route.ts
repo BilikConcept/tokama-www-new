@@ -29,7 +29,7 @@ export async function GET(request: Request) {
   const reservationIds = (reservations || []).map((reservation) => reservation.id);
 
   const offerIds = [...new Set((reservations || []).map(reservation => reservation.individual_offer_id).filter(Boolean))];
-  const [addonsResult, housesResult, offersResult] = reservationIds.length
+  const [addonsResult, housesResult, offersResult, paymentsResult] = reservationIds.length
     ? await Promise.all([
         supabase
           .from("tokama_reservation_addons")
@@ -42,8 +42,10 @@ export async function GET(request: Request) {
         offerIds.length
           ? supabase.from("tokama_individual_offers").select("id,offer_number,title,variants,accepted_variant_id").in("id", offerIds)
           : Promise.resolve({ data: [], error: null }),
+        supabase.from("tokama_payment_requests").select("id,reservation_id,provider,status,amount_cents,p24_order_id,p24_registered_at,p24_verified_at,refund_requested_at,refunded_at,updated_at").in("reservation_id", reservationIds).order("updated_at", { ascending:false }),
       ])
     : [
+        { data: [], error: null },
         { data: [], error: null },
         { data: [], error: null },
         { data: [], error: null },
@@ -52,6 +54,7 @@ export async function GET(request: Request) {
   const { data: addons, error: addonsError } = addonsResult;
   const { data: houseAssignments, error: housesError } = housesResult;
   const { data: individualOffers, error: offersError } = offersResult;
+  const { data: paymentRequests, error: paymentsError } = paymentsResult;
 
   if (addonsError) {
     return NextResponse.json(
@@ -73,6 +76,7 @@ export async function GET(request: Request) {
     );
   }
   if (offersError) return NextResponse.json({ ok:false, message:offersError.message }, { status:500 });
+  if (paymentsError) return NextResponse.json({ ok:false, message:paymentsError.message }, { status:500 });
 
   const reservationsWithAddons = (reservations || []).map((reservation) => ({
     ...reservation,
@@ -85,6 +89,7 @@ export async function GET(request: Request) {
           : assignment.house,
       })),
     individual_offer: (individualOffers || []).find(offer => offer.id === reservation.individual_offer_id) || null,
+    latest_payment: (paymentRequests || []).find(payment => payment.reservation_id === reservation.id) || null,
   }));
 
   console.log("[TOKAMA RESERVATIONS] Loaded", {
