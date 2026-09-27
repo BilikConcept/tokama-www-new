@@ -14,6 +14,10 @@ type Inquiry = {
 const clean = (value: unknown, maxLength: number) =>
   typeof value === "string" ? value.trim().slice(0, maxLength) : "";
 
+const escapeHtml = (value: string) => value.replace(/[&<>"']/g, character => ({
+  "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;",
+}[character] || character));
+
 export async function POST(request: Request) {
   let data: Inquiry;
 
@@ -65,6 +69,7 @@ export async function POST(request: Request) {
       to: [to],
       reply_to: email,
       subject: `Zapytanie eventowe — ${name}`,
+      html: `<div style="margin:0;padding:32px 12px;background:#fff;font-family:Arial,sans-serif;color:#111"><table role="presentation" width="100%" style="max-width:620px;margin:auto;border-collapse:collapse;border:1px solid #e5e5e5"><tr><td style="padding:28px;text-align:center;border-bottom:1px solid #e5e5e5"><img src="https://tokama-www-new.vercel.app/tokama-logo.svg" width="142" alt="TOKAMA" style="display:inline-block;border:0;height:auto"><p style="margin:8px 0 0;font-size:9px;letter-spacing:3px;color:#777">NOWE ZAPYTANIE EVENTOWE</p></td></tr><tr><td style="padding:38px 34px"><h1 style="margin:0 0 24px;font:400 34px/1.1 Georgia,serif">${escapeHtml(name)}</h1><p style="line-height:1.7"><strong>E-mail:</strong> ${escapeHtml(email)}<br><strong>Telefon:</strong> ${escapeHtml(phone || "—")}<br><strong>Rodzaj wydarzenia:</strong> ${escapeHtml(eventType || "—")}<br><strong>Planowany termin:</strong> ${escapeHtml(eventDate || "—")}<br><strong>Liczba gości:</strong> ${escapeHtml(guests || "—")}</p><p style="margin-top:28px;padding-top:24px;border-top:1px solid #e5e5e5;color:#555;line-height:1.7;white-space:pre-line">${escapeHtml(message)}</p></td></tr></table></div>`,
       text: [
         "Nowe zapytanie z formularza Eventy TOKAMA",
         "",

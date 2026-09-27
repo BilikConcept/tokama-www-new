@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import { sendTokamaSms } from "@/lib/tokamaNotifications";
+import { sendTokamaEmail, sendTokamaSms } from "@/lib/tokamaNotifications";
 
 type RouteContext = {
   params: Promise<{
@@ -84,6 +84,11 @@ Powód: ${reasonText}
 Zachęcamy do wyboru innego terminu.`;
 }
 
+function buildRejectionEmail(input: { locale:"pl"|"en"; guestName:string; checkin:string; checkout:string; reason:RejectionReason }) {
+  const english=input.locale==="en"; const reasonText=rejectionReasons[input.reason][input.locale];
+  return { subject:english?"TOKAMA — update about your stay":"TOKAMA — informacja o Twoim pobycie", html:`<div style="margin:0;padding:32px 12px;background:#fff;font-family:Arial,sans-serif;color:#111"><table role="presentation" width="100%" style="max-width:620px;margin:auto;border-collapse:collapse;border:1px solid #e5e5e5"><tr><td style="padding:28px;text-align:center;border-bottom:1px solid #e5e5e5"><img src="https://tokama-www-new.vercel.app/tokama-logo.svg" width="142" alt="TOKAMA" style="display:inline-block;height:auto"><p style="margin:8px 0 0;font-size:9px;letter-spacing:3px;color:#777">WINDYKI · BLISKO NATURY</p></td></tr><tr><td style="padding:42px 34px;text-align:center"><p style="margin:0 0 12px;font-size:11px;letter-spacing:2px;color:#777">${english?"RESERVATION UPDATE":"INFORMACJA O REZERWACJI"}</p><h1 style="margin:0 0 22px;font:400 36px/1.05 Georgia,serif">${english?`Dear ${input.guestName},`:`${input.guestName},`}</h1><p style="margin:0 auto 24px;max-width:480px;color:#555;line-height:1.7">${english?"Unfortunately, we cannot confirm your stay for the selected dates.":"Niestety nie możemy potwierdzić Twojego pobytu w wybranym terminie."}</p><p style="margin:0;padding:22px;border-top:1px solid #e5e5e5;border-bottom:1px solid #e5e5e5;line-height:1.7"><strong>${formatDate(input.checkin)} — ${formatDate(input.checkout)}</strong><br><span style="color:#666">${reasonText}</span></p><p style="margin:26px auto 0;max-width:480px;color:#555;line-height:1.7">${english?"You are warmly invited to choose another date.":"Zapraszamy do wyboru innego terminu — chętnie pomożemy znaleźć najlepszą alternatywę."}</p><a href="https://tokama-www-new.vercel.app/rezerwacja" style="display:inline-block;margin-top:28px;padding:16px 24px;background:#111;color:#fff;text-decoration:none">${english?"Choose another date":"Wybierz inny termin"}</a></td></tr></table></div>` };
+}
+
 export async function POST(request: Request, context: RouteContext) {
   try {
     const { reservationId } = await context.params;
@@ -133,7 +138,7 @@ export async function POST(request: Request, context: RouteContext) {
     const { data: reservation, error: reservationError } = await supabase
       .from("tokama_reservations")
       .select(
-        "id, status, locale, checkin, checkout, guest_phone, rejection_sms_sent_at"
+        "id, status, locale, checkin, checkout, guest_name, guest_phone, guest_email, rejection_sms_sent_at"
       )
       .eq("id", reservationId)
       .single();
@@ -152,25 +157,25 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
-    if (!reservation.guest_phone) {
+    if (!reservation.guest_phone && !reservation.guest_email) {
       return NextResponse.json(
-        { ok: false, message: "Guest phone number is missing." },
+        { ok: false, message: "Brak numeru telefonu i adresu e-mail gościa." },
         { status: 400 }
       );
     }
 
     let rejectionSmsSentAt = reservation.rejection_sms_sent_at;
+    let notificationChannel: "sms"|"email" = "sms";
 
     if (!rejectionSmsSentAt) {
-      await sendTokamaSms({
-        to: reservation.guest_phone,
-        text: buildRejectionSms({
-          locale: reservation.locale || "pl",
-          checkin: reservation.checkin,
-          checkout: reservation.checkout,
-          reason,
-        }),
-      });
+      try {
+        if (!reservation.guest_phone) throw new Error("Missing phone");
+        await sendTokamaSms({ to:reservation.guest_phone,text:buildRejectionSms({locale:reservation.locale||"pl",checkin:reservation.checkin,checkout:reservation.checkout,reason}) });
+      } catch (smsError) {
+        if (!reservation.guest_email) throw smsError;
+        const email=buildRejectionEmail({locale:reservation.locale||"pl",guestName:reservation.guest_name||"",checkin:reservation.checkin,checkout:reservation.checkout,reason});
+        await sendTokamaEmail({to:reservation.guest_email,...email}); notificationChannel="email";
+      }
 
       rejectionSmsSentAt = new Date().toISOString();
     }
@@ -199,7 +204,8 @@ export async function POST(request: Request, context: RouteContext) {
     return NextResponse.json({
       ok: true,
       reservation: updatedReservation,
-      smsSent: true,
+      smsSent: notificationChannel === "sms",
+      notificationChannel,
       reason,
     });
   } catch (error) {
