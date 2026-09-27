@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSupabaseAdmin } from "@/lib/supabase/admin";
-import { sendTokamaSms } from "@/lib/tokamaNotifications";
+import { sendTokamaEmail, sendTokamaSms } from "@/lib/tokamaNotifications";
 import { buildPaymentSms } from "@/lib/payments/paymentSms";
+import { buildPaymentEmail } from "@/lib/payments/paymentEmail";
 import { assertRealP24Credentials } from "@/lib/payments/p24";
 
 type PaymentProvider = "bank_transfer" | "p24";
@@ -41,6 +42,7 @@ export async function POST(request: Request, context: RouteContext) {
     const { reservationId } = await context.params;
     const body = await request.json().catch(() => null);
     const provider = getPaymentProvider(body?.provider);
+    const channel = body?.channel === "sms" ? "sms" : "email";
 
     if (!provider) {
       return NextResponse.json(
@@ -93,7 +95,7 @@ export async function POST(request: Request, context: RouteContext) {
     const { data: reservation, error: reservationError } = await supabase
       .from("tokama_reservations")
       .select(
-        "id, public_code, status, locale, guest_name, guest_email, guest_phone, currency, total_estimated_cents, host_final_amount_cents, online_due_cents, arrival_due_cents, payment_method, payment_link_sent_at, approval_sms_sent_at"
+        "id, public_code, status, locale, guest_name, guest_email, guest_phone, checkin, checkout, currency, total_estimated_cents, host_final_amount_cents, online_due_cents, arrival_due_cents, payment_method, payment_link_sent_at, approval_sms_sent_at"
       )
       .eq("id", reservationId)
       .single();
@@ -115,12 +117,13 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
-    if (!reservation.guest_phone) {
+    if (channel === "sms" && !reservation.guest_phone) {
       return NextResponse.json(
         { ok: false, message: "Guest phone number is missing." },
         { status: 400 }
       );
     }
+    if (channel === "email" && !reservation.guest_email) return NextResponse.json({ok:false,message:"Guest email address is missing."},{status:400});
 
     const reservationTotalCents =
       Number(reservation.host_final_amount_cents) ||
@@ -189,7 +192,7 @@ export async function POST(request: Request, context: RouteContext) {
         status: "payment_sent",
         payment_method: provider,
         payment_link_sent_at: paymentSentAt,
-        approval_sms_sent_at: paymentSentAt,
+        approval_sms_sent_at: channel === "sms" ? paymentSentAt : reservation.approval_sms_sent_at,
       })
       .eq("id", reservation.id)
       .select("*")
@@ -211,16 +214,10 @@ export async function POST(request: Request, context: RouteContext) {
     }
 
     try {
-      await sendTokamaSms({
-        to: reservation.guest_phone,
-        text: buildPaymentSms({
-          locale: reservation.locale || "pl",
-          publicCode,
-          amount: formatMoney(amountCents, reservation.currency || "PLN"),
-          paymentPageUrl,
-        }),
-      });
-    } catch (smsError) {
+      const amount=formatMoney(amountCents,reservation.currency||"PLN");
+      if(channel === "sms") await sendTokamaSms({to:reservation.guest_phone,text:buildPaymentSms({locale:reservation.locale||"pl",publicCode,amount,paymentPageUrl})});
+      else { const email=buildPaymentEmail({locale:reservation.locale,guestName:reservation.guest_name,publicCode,checkin:reservation.checkin,checkout:reservation.checkout,amount,paymentPageUrl}); await sendTokamaEmail({to:reservation.guest_email,...email}); }
+    } catch (notificationError) {
       await Promise.all([
         supabase
           .from("tokama_reservations")
@@ -242,9 +239,9 @@ export async function POST(request: Request, context: RouteContext) {
         {
           ok: false,
           message:
-            smsError instanceof Error
-              ? smsError.message
-              : "Payment SMS send failed.",
+            notificationError instanceof Error
+              ? notificationError.message
+              : "Payment notification send failed.",
         },
         { status: 502 }
       );
@@ -256,6 +253,7 @@ export async function POST(request: Request, context: RouteContext) {
       paymentRequest,
       paymentPageUrl,
       provider,
+      notificationChannel: channel,
       stripePaymentIntentId: null,
     });
   } catch (error) {
