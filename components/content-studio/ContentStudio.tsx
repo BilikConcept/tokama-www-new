@@ -269,13 +269,15 @@ function PricingCenter({ hostApi, notify }: { hostApi: (path: string, init?: Req
   const [rules, setRules] = useState<Row[]>([]);
   const [editing, setEditing] = useState<Row | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refundPin, setRefundPin] = useState({ old:"", next:"", configured:false });
 
   const loadPricing = useCallback(async () => {
     setLoading(true);
     try {
-      const [settingsResult, rulesResult] = await Promise.all([hostApi("settings"), hostApi("pricing-rules")]);
+      const [settingsResult, rulesResult, pinResult] = await Promise.all([hostApi("settings"), hostApi("pricing-rules"), hostApi("settings/refund-pin")]);
       setSettings(settingsResult.settings || { currency: "PLN", base_price_per_house_per_night_cents: 120000 });
       setRules(rulesResult.pricingRules || []);
+      setRefundPin(current => ({ ...current, configured:Boolean(pinResult.configured) }));
     } catch (error) {
       notify(error instanceof Error ? error.message : "Nie udało się wczytać cennika.");
     } finally { setLoading(false); }
@@ -290,6 +292,14 @@ function PricingCenter({ hostApi, notify }: { hostApi: (path: string, init?: Req
       notify("Cena bazowa została zapisana.");
       await loadPricing();
     } catch (error) { notify(error instanceof Error ? error.message : "Nie udało się zapisać ceny."); }
+  }
+
+  async function saveRefundPin() {
+    try {
+      await hostApi("settings/refund-pin", { method:"POST", body:JSON.stringify({ old_pin:refundPin.old, new_pin:refundPin.next }) });
+      setRefundPin({ old:"", next:"", configured:true });
+      notify("PIN zwrotów został zmieniony.");
+    } catch (error) { notify(error instanceof Error ? error.message : "Nie udało się zmienić PIN-u."); }
   }
 
   async function saveRule() {
@@ -313,6 +323,15 @@ function PricingCenter({ hostApi, notify }: { hostApi: (path: string, init?: Req
 
   if (loading) return <div className={styles.page}><p className={styles.intro}>Wczytywanie cennika…</p></div>;
   return <div className={styles.page}>
+    <section className={styles.calendarSection}>
+      <header><div><p className={styles.eyebrow}>BEZPIECZEŃSTWO ZWROTÓW</p><h2>PIN do późnych zwrotów</h2></div><span>{refundPin.configured?"PIN jest ustawiony":"Ustaw pierwszy PIN"}</span></header>
+      <div className={styles.refundPinForm}>
+        <label><span>Stary PIN</span><input type="password" inputMode="numeric" maxLength={4} value={refundPin.old} onChange={event=>setRefundPin({...refundPin,old:event.target.value.replace(/\D/g,"").slice(0,4)})} placeholder={refundPin.configured?"••••":"Nie jest wymagany"} /></label>
+        <label><span>Nowy PIN</span><input type="password" inputMode="numeric" maxLength={4} value={refundPin.next} onChange={event=>setRefundPin({...refundPin,next:event.target.value.replace(/\D/g,"").slice(0,4)})} placeholder="4 cyfry" /></label>
+        <button className={styles.primary} disabled={refundPin.next.length!==4 || (refundPin.configured && refundPin.old.length!==4)} onClick={()=>void saveRefundPin()}>Zmień PIN</button>
+      </div>
+      <p className={styles.refundPinHint}>Do 14 dni przed przyjazdem zwrot nie wymaga PIN-u. Później system poprosi o ten kod.</p>
+    </section>
     <div className={styles.toolbar}><p className={styles.intro}>Zarządzaj ceną domyślną oraz wyjątkami dla weekendów, sezonów, świąt i wybranych terminów.</p><div><button className={styles.primary} onClick={() => setEditing({ ...emptyPricingRule, weekdays: [...emptyPricingRule.weekdays] })}>+ Nowa reguła</button></div></div>
     <div className={styles.calendarStats}>
       <article><small>CENA BAZOWA / DOMEK / NOC</small><strong>{Number(settings?.base_price_per_house_per_night_cents || 0) / 100}<span> PLN</span></strong></article>
@@ -532,6 +551,9 @@ function CalendarCenter({ data, calendarApi, hostApi, reload, notify, issue }: {
 function Stays({ data, hostApi, reload, notify }: { data: Record<string, Row[]>; hostApi: (path: string, init?: RequestInit) => Promise<any>; reload: () => Promise<void>; notify: (value: string) => void }) {
   const [filter, setFilter] = useState<"requested" | "active" | "all">("requested");
   const [selected, setSelected] = useState<Row | null>(null);
+  const [refundOpen, setRefundOpen] = useState(false);
+  const [refundPin, setRefundPin] = useState("");
+  const [refunding, setRefunding] = useState(false);
   const allReservations=data.reservations||[]; const today=new Date().toISOString().slice(0,10);
   const requested=allReservations.filter(item=>item.status==="requested");
   const current=allReservations.filter(item=>!["cancelled","rejected"].includes(item.status)&&item.checkin<=today&&item.checkout>=today);
@@ -547,6 +569,16 @@ function Stays({ data, hostApi, reload, notify }: { data: Record<string, Row[]>;
       await hostApi(`reservations/${selected.id}/${path}`, { method: "POST", body: JSON.stringify(body) });
       setSelected(null); await reload(); notify("Pobyt został zaktualizowany.");
     } catch (error) { notify((error as Error).message); }
+  }
+  const refundNeedsPin = selected ? Math.ceil((new Date(`${selected.checkin}T00:00:00`).getTime() - new Date(`${today}T00:00:00`).getTime()) / 86400000) < 14 : false;
+  async function refund() {
+    if (!selected) return;
+    setRefunding(true);
+    try {
+      await hostApi(`reservations/${selected.id}/refund`, { method:"POST", body:JSON.stringify({ pin:refundPin }) });
+      setSelected(null); setRefundOpen(false); setRefundPin(""); await reload(); notify("Zwrot został zlecony w Przelewy24, a gość otrzymał e-mail.");
+    } catch (error) { notify(error instanceof Error ? error.message : "Nie udało się zlecić zwrotu."); }
+    finally { setRefunding(false); }
   }
   const statusLabel: Record<string,string> = { requested:"Do akceptacji",approved:"Zaakceptowany",payment_sent:"Wysłano płatność",paid:"Opłacony",confirmed:"Potwierdzony",cancelled:"Anulowany",rejected:"Odrzucony" };
   const reservationIdentity=(item:Row)=><span><small>{item.public_code}</small><strong>{item.guest_name}</strong>{item.individual_offer_id?<em className={styles.individualOfferBadge}>OFERTA INDYWIDUALNA · {item.individual_offer?.offer_number||"TOKAMA"}</em>:null}</span>;
@@ -573,7 +605,9 @@ function Stays({ data, hostApi, reload, notify }: { data: Record<string, Row[]>;
         {["approved","payment_sent"].includes(selected.status) ? <><button className={styles.primary} onClick={() => void action("create-payment-link", { provider: "p24", channel:"email" })}>Wyślij P24 e-mailem</button><button onClick={() => void action("create-payment-link", { provider: "p24", channel:"sms" })}>Wyślij P24 SMS-em</button><button onClick={() => void action("create-payment-link", { provider: "bank_transfer", channel:"email" })}>Wyślij przelew e-mailem</button><button onClick={() => void action("create-payment-link", { provider: "bank_transfer", channel:"sms" })}>Wyślij przelew SMS-em</button></> : null}
         {!["paid","cancelled","rejected"].includes(selected.status) ? <button onClick={() => void action("mark-paid")}>Oznacz jako opłacony</button> : null}
         {!["cancelled","rejected"].includes(selected.status) ? <button className={styles.danger} onClick={() => void action("cancel")}>Anuluj pobyt</button> : null}
+        {selected.payment_status === "paid" && selected.payment_method === "p24" ? <button className={styles.refundButton} onClick={()=>setRefundOpen(true)}>Zwróć pieniądze za pobyt</button> : null}
       </div>
+      {refundOpen ? <div className={styles.refundConfirm}><p className={styles.eyebrow}>ZWROT PRZEZ PRZELEWY24</p><h3>Zwrócić pełną kwotę i anulować pobyt?</h3><p>Zwrot trafi na tę samą metodę płatności. Tej operacji nie można cofnąć.</p>{refundNeedsPin?<label><span>PIN zwrotów</span><input autoFocus type="password" inputMode="numeric" maxLength={4} value={refundPin} onChange={event=>setRefundPin(event.target.value.replace(/\D/g,"").slice(0,4))} placeholder="••••" /></label>:<small>Termin zaczyna się za co najmniej 14 dni — PIN nie jest wymagany.</small>}<div><button onClick={()=>{setRefundOpen(false);setRefundPin("");}}>Wróć</button><button className={styles.danger} disabled={refunding || (refundNeedsPin&&refundPin.length!==4)} onClick={()=>void refund()}>{refunding?"Zlecam zwrot…":"Potwierdzam zwrot"}</button></div></div> : null}
     </div></Modal> : null}
   </div>;
 }

@@ -137,6 +137,52 @@ async function readP24Response(response: Response) {
   return result;
 }
 
+export async function refundP24Transaction(input: {
+  orderId: number;
+  sessionId: string;
+  amount: number;
+  description: string;
+  requestId: string;
+  refundsUuid: string;
+  urlStatus: string;
+}) {
+  const config = getP24Config();
+  assertRealP24Credentials(config);
+  const response = await fetch(`${config.apiBaseUrl}/api/v1/transaction/refund`, {
+    method: "POST",
+    headers: {
+      Authorization: getP24Authorization(config),
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      requestId: input.requestId.slice(0, 45),
+      refundsUuid: input.refundsUuid.slice(0, 35),
+      urlStatus: input.urlStatus,
+      refunds: [{
+        orderId: input.orderId,
+        sessionId: input.sessionId,
+        amount: input.amount,
+        description: input.description.slice(0, 35),
+      }],
+    }),
+    cache: "no-store",
+  });
+  const result = await readP24Response(response);
+  const refund = Array.isArray(result?.data) ? result.data[0] : null;
+  if (!refund?.status) throw new Error(refund?.message || "Przelewy24 nie przyjęło zwrotu.");
+  return refund;
+}
+
+export async function getP24RefundDetails(orderId: number) {
+  const config = getP24Config();
+  assertRealP24Credentials(config);
+  const response = await fetch(`${config.apiBaseUrl}/api/v1/refund/by/orderId/${encodeURIComponent(orderId)}`, {
+    headers: { Authorization: getP24Authorization(config) },
+    cache: "no-store",
+  });
+  return readP24Response(response);
+}
+
 export async function registerP24Transaction(input: {
   sessionId: string;
   amount: number;

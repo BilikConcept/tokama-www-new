@@ -848,6 +848,16 @@
 .stayActions { display: flex; flex-wrap: wrap; gap: 8px; }
 .stayActions > button { min-height: 44px; padding: 0 17px; border: 1px solid var(--line); border-radius: 999px; background: #fff; cursor: pointer; font-size: 11px; }
 .stayActions .danger { margin: 0; }
+.stayActions .refundButton { border-color: #a90000; color: #8b0000; }
+.refundConfirm { padding: 24px; border: 1px solid #e1caca; border-radius: 20px; background: #fff8f7; }
+.refundConfirm h3 { margin: 5px 0 10px; font: 400 28px/1.05 Georgia,serif; }
+.refundConfirm > p:not(.eyebrow) { margin: 0 0 18px; color: #666; font-size: 13px; line-height: 1.6; }
+.refundConfirm label { display: grid; gap: 7px; max-width: 220px; color: #777; font-size: 9px; letter-spacing: .13em; text-transform: uppercase; }
+.refundConfirm input { height: 44px; padding: 0 13px; border: 1px solid #ddd; border-radius: 12px; background: #fff; font-size: 18px; letter-spacing: .35em; }
+.refundConfirm > small { display: block; color: #596b44; }
+.refundConfirm > div { display: flex; gap: 8px; margin-top: 22px; }
+.refundConfirm button { min-height: 42px; padding: 0 16px; border: 1px solid #ccc; border-radius: 999px; background: #fff; cursor: pointer; }
+.refundConfirm .danger { margin: 0; border: 0; background: #a90000; color: #fff; }
 
 .packageMediaField { grid-column: 1 / -1; min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 20px; }
 .uploadProgress { display: grid; gap: 10px; margin: 0 0 18px; padding: 15px 17px; border-radius: 17px; background: #f1f1ef; }
@@ -923,6 +933,10 @@
 .pricingBaseForm label, .pricingForm label { display: grid; gap: 8px; color: #777; font-size: 9px; letter-spacing: .13em; text-transform: uppercase; }
 .pricingBaseForm input, .pricingForm input { width: 100%; height: 44px; padding: 0 13px; border: 1px solid #e3e3e0; border-radius: 14px; outline: 0; background: #fafafa; color: #111; font-size: 13px; text-transform: none; }
 .pricingBaseForm input:focus, .pricingForm input:focus { border-color: #999; background: #fff; }
+.refundPinForm { display: grid; grid-template-columns: minmax(180px, 280px) minmax(180px, 280px) auto; align-items: end; gap: 12px; padding-top: 22px; }
+.refundPinForm label { display: grid; gap: 8px; color: #777; font-size: 9px; letter-spacing: .13em; text-transform: uppercase; }
+.refundPinForm input { width: 100%; height: 44px; padding: 0 13px; border: 1px solid #e3e3e0; border-radius: 14px; outline: 0; background: #fafafa; font-size: 16px; letter-spacing: .28em; }
+.refundPinHint { margin: 14px 0 0; color: #777; font-size: 12px; }
 .pricingRules { display: grid; gap: 7px; padding-top: 18px; }
 .pricingRule { width: 100%; min-height: 86px; display: grid; grid-template-columns: 90px minmax(180px, 1.3fr) 130px 220px 180px; align-items: center; gap: 18px; padding: 14px 16px; border: 1px solid var(--line); border-radius: 18px; background: #fafafa; color: var(--ink); cursor: pointer; text-align: left; }
 .pricingRule:hover { border-color: #bbb; background: #fff; }
@@ -959,6 +973,7 @@
 
 @media (max-width: 900px) {
   .pricingBaseForm { grid-template-columns: 1fr; }
+  .refundPinForm { grid-template-columns: 1fr; }
   .pricingRule { grid-template-columns: 1fr 1fr; }
   .discountList > button { grid-template-columns: 1fr 1fr; }
   .pricingEmpty { grid-template-columns: 1fr; gap: 24px; padding: 30px; }
