@@ -39,7 +39,13 @@ export async function POST(request: Request, context: { params: Promise<{ token:
   if (!variant) return NextResponse.json({ message: "Wybierz poprawny wariant oferty." }, { status: 400 });
   if (offer.reservation_id) {
     const { data: existing } = await supabase.from("tokama_reservations").select("public_code").eq("id", offer.reservation_id).maybeSingle();
-    if (existing?.public_code) return NextResponse.json({ ok:true, payment_url:`/platnosc/${existing.public_code}` });
+    if (existing?.public_code) {
+      await Promise.all([
+        supabase.from("tokama_reservations").update({payment_method:"p24"}).eq("id",offer.reservation_id).neq("payment_status","paid"),
+        supabase.from("tokama_payment_requests").update({provider:"p24"}).eq("reservation_id",offer.reservation_id).neq("status","paid"),
+      ]);
+      return NextResponse.json({ ok:true, payment_url:`/platnosc/${existing.public_code}` });
+    }
   }
 
   const [{ data: settings, error: settingsError }, { count: housesTotal, error: housesCountError }] = await Promise.all([
@@ -62,13 +68,13 @@ export async function POST(request: Request, context: { params: Promise<{ token:
     guest_email:offer.client_email, guest_phone:"", currency:offer.currency||"PLN", stay_price_cents:Number(variant.total_cents),
     addons_price_cents:0, total_estimated_cents:Number(variant.total_cents), host_final_amount_cents:Number(variant.total_cents),
     min_nights_at_booking:Math.max(1,nights), base_price_per_house_per_night_cents_at_booking:Number(settings.base_price_per_house_per_night_cents||0),
-    individual_offer_id:offer.id, individual_offer_variant_id:variant.id, payment_method:(process.env.TOKAMA_DEFAULT_PAYMENT_PROVIDER||"bank_transfer"),
+    individual_offer_id:offer.id, individual_offer_variant_id:variant.id, payment_method:"p24",
     payment_link_sent_at:acceptedAt,
   }).select("id,public_code").single();
   if (reservationError || !reservation) return NextResponse.json({ message: reservationError?.message || "Nie udało się utworzyć rezerwacji." }, { status: 500 });
   const { error: housesError } = await supabase.from("tokama_reservation_houses").insert(verifiedHouseIds.map((houseId:string)=>({reservation_id:reservation.id,house_id:houseId})));
   if (housesError) { await supabase.from("tokama_reservations").delete().eq("id",reservation.id); return NextResponse.json({message:housesError.message},{status:500}); }
-  const provider = String(process.env.TOKAMA_DEFAULT_PAYMENT_PROVIDER || "bank_transfer").toLowerCase() === "p24" ? "p24" : "bank_transfer";
+  const provider = "p24";
   const paymentUrl = `/platnosc/${encodeURIComponent(reservation.public_code)}`;
   const { error: paymentError } = await supabase.from("tokama_payment_requests").insert({ reservation_id:reservation.id,provider,public_code:reservation.public_code,payment_page_url:paymentUrl,payment_url:paymentUrl,amount_cents:Number(variant.total_cents),currency:offer.currency||"PLN",status:"sent",sent_at:acceptedAt });
   if (paymentError) { await supabase.from("tokama_reservations").delete().eq("id",reservation.id); return NextResponse.json({message:paymentError.message},{status:500}); }
