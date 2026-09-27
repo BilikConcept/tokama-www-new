@@ -7,6 +7,7 @@ import {
   verifyP24Transaction,
 } from "@/lib/payments/p24";
 import { sendTokamaReservationPaidPush } from "@/lib/tokamaPush";
+import { sendPaidReservationConfirmation } from "@/lib/tokama/paymentConfirmation";
 
 type NotificationBody = {
   merchantId?: number;
@@ -121,6 +122,11 @@ export async function POST(request: Request) {
         await sendTokamaReservationPaidPush(reservation);
       } catch (pushError) {
         console.error("[TOKAMA P24] Paid reservation notification failed", pushError);
+      }
+      try {
+        await sendPaidReservationConfirmation(supabase, reservation.id);
+      } catch (emailError) {
+        console.error("[TOKAMA P24] Guest confirmation email failed", emailError);
       }
     }
 

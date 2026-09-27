@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireHostApi } from "@/lib/tokama/hostApi";
 import { sendTokamaSms } from "@/lib/tokamaNotifications";
+import { sendPaidReservationConfirmation } from "@/lib/tokama/paymentConfirmation";
 
 type RouteContext = {
   params: Promise<{ reservationId: string }>;
@@ -136,6 +137,12 @@ export async function POST(request: Request, context: RouteContext) {
               : "Płatność została zapisana, ale SMS nie został wysłany.";
         }
       }
+    }
+
+    try {
+      await sendPaidReservationConfirmation(auth.supabase, reservation.id);
+    } catch (emailError) {
+      console.error("[TOKAMA HOST] Guest payment confirmation email failed", emailError);
     }
 
     return NextResponse.json({

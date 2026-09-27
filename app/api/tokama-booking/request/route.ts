@@ -7,6 +7,7 @@ import {
 } from "@/lib/tokama/discounts";
 import { sendTokamaEmail } from "@/lib/tokamaNotifications";
 import { sendTokamaNewReservationPush } from "@/lib/tokamaPush";
+import { getActiveOfferHeldHouseIds } from "@/lib/tokama/offerHolds";
 import {
   TOKAMA_PRIVACY_VERSION,
   TOKAMA_TERMS_VERSION,
@@ -268,6 +269,9 @@ async function findSuggestedAvailableDates(input: {
         }
       }
     }
+
+    const offerHeldHouseIds = await getActiveOfferHeldHouseIds({ supabase: input.supabase, checkin, checkout });
+    offerHeldHouseIds.forEach(houseId => reservedHouseIds.add(houseId));
 
     const blockedHouseKeysForSuggestion =
       await getBlockedHouseKeys(input.supabase, checkin, checkout);
@@ -538,6 +542,9 @@ export async function POST(request: Request) {
         }
       }
     }
+
+    const offerHeldHouseIds = await getActiveOfferHeldHouseIds({ supabase, checkin: body.checkin, checkout: body.checkout, excludeOfferId: individualOffer?.id });
+    offerHeldHouseIds.forEach(houseId => reservedHouseIds.add(houseId));
 
     const { data: allHouses, error: allHousesError } = await supabase
       .from("tokama_houses")

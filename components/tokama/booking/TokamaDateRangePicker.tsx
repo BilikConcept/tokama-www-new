@@ -33,6 +33,7 @@ const content = {
     previous: "Poprzedni miesiąc",
     next: "Następny miesiąc",
     calm: "Spokojny termin", popular: "Popularny termin", hot: "Gorący termin",
+    selectedStay: "Wybrany pobyt", from: "od", to: "do",
   },
   en: {
     checkin: "Check-in",
@@ -46,6 +47,7 @@ const content = {
     previous: "Previous month",
     next: "Next month",
     calm: "Calm dates", popular: "Popular dates", hot: "Hot dates",
+    selectedStay: "Selected stay", from: "from", to: "to",
   },
 };
 
@@ -218,6 +220,8 @@ export function TokamaDateRangePicker({
           </button>
         </div>
 
+        {checkin ? <div className={styles.rangeSummary} aria-live="polite"><span>{t.selectedStay}</span><strong>{t.from} {formatDate(checkin, locale)} <i>→</i> {checkout ? `${t.to} ${formatDate(checkout, locale)}` : t.selectCheckout}</strong></div> : null}
+
         <div className={styles.months}>
           {months.map((month) => (
             <div className={styles.month} key={month.toISOString()}>
@@ -261,8 +265,9 @@ export function TokamaDateRangePicker({
                         inRange ? styles.range : "",
                         signal ? styles[signal.level] : "",
                       ].join(" ")}
+                      aria-label={`${formatDate(iso, locale)}${isStart ? `, ${t.checkin}` : ""}${isEnd ? `, ${t.checkout}` : ""}`}
                     >
-                      <span>{date.getDate()}</span>{signal ? <i /> : null}
+                      <span>{date.getDate()}</span>{isStart || isEnd ? <b>{isStart ? t.from : t.to}</b> : null}{signal ? <i /> : null}
                     </button>
                   );
                 })}

@@ -5,6 +5,7 @@ import {
   isP24DemoOutcome,
 } from "@/lib/payments/p24-demo";
 import { sendTokamaReservationPaidPush } from "@/lib/tokamaPush";
+import { sendPaidReservationConfirmation } from "@/lib/tokama/paymentConfirmation";
 
 type RouteContext = {
   params: Promise<{
@@ -131,6 +132,11 @@ export async function POST(request: Request, context: RouteContext) {
       });
     } catch (pushError) {
       console.log("[TOKAMA P24 DEMO] Paid reservation push failed", pushError);
+    }
+    try {
+      await sendPaidReservationConfirmation(supabase, reservation.id);
+    } catch (emailError) {
+      console.error("[TOKAMA P24 DEMO] Guest confirmation email failed", emailError);
     }
 
     return NextResponse.json({

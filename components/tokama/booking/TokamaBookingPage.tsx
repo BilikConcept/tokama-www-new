@@ -552,6 +552,10 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
     );
   }
 
+  if (submitStatus === "loading") {
+    return <main className={styles.page}><section className={`${styles.successScreen} ${styles.sendingScreen}`}><div className={styles.sendingCard}><div className={styles.sendingPulse} aria-hidden="true"><span /></div><p className={styles.successKicker}>{locale === "en" ? "TOKAMA · BOOKING" : "TOKAMA · REZERWACJA"}</p><h1 className={styles.successTitle}>{locale === "en" ? "We are sending your request." : "Wysyłamy Twoją prośbę."}</h1><p className={styles.successText}>{locale === "en" ? "Please wait a moment — we are securing the selected dates." : "Jeszcze moment — zabezpieczamy wybrany termin."}</p></div></section></main>;
+  }
+
   return (
     <main className={styles.page}>
       <section className={styles.bookingHero}>
@@ -878,7 +882,6 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
             type="submit"
             className={styles.submit}
             disabled={
-              submitStatus === "loading" ||
               !checkin ||
               !checkout ||
               isBelowMinNights ||
@@ -889,7 +892,7 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
               !privacyAcknowledged
             }
           >
-            {submitStatus === "loading" ? "..." : t.submit}
+            {t.submit}
           </button>
 
           {(submitStatus as string) === "success" && <p className={styles.success}>{t.success}</p>}

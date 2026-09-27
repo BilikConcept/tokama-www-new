@@ -28,7 +28,8 @@ export async function GET(request: Request) {
 
   const reservationIds = (reservations || []).map((reservation) => reservation.id);
 
-  const [addonsResult, housesResult] = reservationIds.length
+  const offerIds = [...new Set((reservations || []).map(reservation => reservation.individual_offer_id).filter(Boolean))];
+  const [addonsResult, housesResult, offersResult] = reservationIds.length
     ? await Promise.all([
         supabase
           .from("tokama_reservation_addons")
@@ -38,14 +39,19 @@ export async function GET(request: Request) {
           .from("tokama_reservation_houses")
           .select("reservation_id, house:tokama_houses(code, name)")
           .in("reservation_id", reservationIds),
+        offerIds.length
+          ? supabase.from("tokama_individual_offers").select("id,offer_number,title,variants,accepted_variant_id").in("id", offerIds)
+          : Promise.resolve({ data: [], error: null }),
       ])
     : [
+        { data: [], error: null },
         { data: [], error: null },
         { data: [], error: null },
       ];
 
   const { data: addons, error: addonsError } = addonsResult;
   const { data: houseAssignments, error: housesError } = housesResult;
+  const { data: individualOffers, error: offersError } = offersResult;
 
   if (addonsError) {
     return NextResponse.json(
@@ -66,6 +72,7 @@ export async function GET(request: Request) {
       { status: 500 }
     );
   }
+  if (offersError) return NextResponse.json({ ok:false, message:offersError.message }, { status:500 });
 
   const reservationsWithAddons = (reservations || []).map((reservation) => ({
     ...reservation,
@@ -77,6 +84,7 @@ export async function GET(request: Request) {
           ? assignment.house[0] || null
           : assignment.house,
       })),
+    individual_offer: (individualOffers || []).find(offer => offer.id === reservation.individual_offer_id) || null,
   }));
 
   console.log("[TOKAMA RESERVATIONS] Loaded", {

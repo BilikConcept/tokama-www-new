@@ -12,15 +12,16 @@ export async function GET() {
     const supabase = getSupabaseAdmin();
     const start = iso(new Date());
     const end = addDays(start, 180);
-    const [settingsResult, rulesResult, housesResult, reservationsResult, externalResult, blocksResult] = await Promise.all([
+    const [settingsResult, rulesResult, housesResult, reservationsResult, externalResult, blocksResult, offersResult] = await Promise.all([
       supabase.from("tokama_booking_settings").select("base_price_per_house_per_night_cents").eq("id", true).single(),
       supabase.from("tokama_pricing_rules").select("id,name,price_cents,valid_from,valid_to,weekdays,priority,is_active").eq("is_active", true).order("priority", { ascending: false }),
       supabase.from("tokama_houses").select("id,code"),
       supabase.from("tokama_reservations").select("id,checkin,checkout,status").lt("checkin", end).gt("checkout", start).in("status", ["requested","approved","payment_sent","paid","confirmed"]),
       supabase.from("tokama_external_calendar_events").select("house_id,start_date,end_date").lt("start_date", end).gt("end_date", start),
       supabase.from("tokama_house_date_blocks").select("house_id,house_code,start_date,end_date").lt("start_date", end).gt("end_date", start),
+      supabase.from("tokama_individual_offers").select("checkin,checkout,held_house_ids").in("status",["sent","accepted"]).gt("hold_expires_at",new Date().toISOString()).lt("checkin",end).gt("checkout",start),
     ]);
-    const error = settingsResult.error || rulesResult.error || housesResult.error || reservationsResult.error || externalResult.error || blocksResult.error;
+    const error = settingsResult.error || rulesResult.error || housesResult.error || reservationsResult.error || externalResult.error || blocksResult.error || offersResult.error;
     if (error) return NextResponse.json({ ok: false, message: error.message }, { status: 500 });
 
     const houses = housesResult.data || [];
@@ -43,6 +44,9 @@ export async function GET() {
       for (const block of blocksResult.data || []) if (night.date >= block.start_date && night.date < block.end_date) {
         const house = houses.find(item => item.id === block.house_id || item.code === block.house_code);
         if (house?.id) unavailable.add(house.id);
+      }
+      for (const offer of offersResult.data || []) if (night.date >= offer.checkin && night.date < offer.checkout) {
+        for (const houseId of Array.isArray(offer.held_house_ids) ? offer.held_house_ids : []) unavailable.add(houseId);
       }
       const available = Math.max(0, houses.length - unavailable.size);
       const level = available <= 1 || night.price_cents >= basePrice * 1.2 ? "hot" : available === 2 || night.price_cents > basePrice ? "popular" : "calm";

@@ -1912,8 +1912,13 @@
 }
 
 .successScreen {
-  padding: calc(var(--tokama-header-height, 150px) + 48px) 24px 48px;
+  position:fixed;
+  inset:0;
+  z-index:1000;
+  min-height:100svh;
+  padding:24px;
   background: #fff;
+  overflow:auto;
 }
 
 .successCard {
@@ -1945,6 +1950,12 @@
 .successSecondary {
   font-weight: 500;
 }
+.sendingScreen { background:#f5f5f1 }
+.sendingCard { display:grid;justify-items:center;width:min(680px,100%);padding:clamp(36px,8vw,86px);text-align:center }
+.sendingPulse { position:relative;width:84px;height:84px;margin-bottom:32px;border:1px solid rgba(17,17,17,.18) }
+.sendingPulse::before,.sendingPulse::after,.sendingPulse span { position:absolute;inset:0;border:1px solid #111;content:"";animation:sendingPulse 1.8s cubic-bezier(.22,1,.36,1) infinite }
+.sendingPulse::after { animation-delay:.45s }.sendingPulse span { animation-delay:.9s }
+@keyframes sendingPulse { 0%{opacity:.75;transform:scale(.2)} 100%{opacity:0;transform:scale(1.15)} }
 
 @media (max-width: 1180px) {
   .bookingHero {
