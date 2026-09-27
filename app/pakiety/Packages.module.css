@@ -23,7 +23,7 @@
 .heroShade { position: absolute; inset: 0; background: linear-gradient(180deg,rgba(0,0,0,.16),rgba(0,0,0,.7)); }
 .heroCopy { position: absolute; right: 6vw; bottom: 9vh; left: 6vw; display: flex; align-items: center; flex-direction: column; text-align: center; }
 .heroCopy > p { margin: 0 0 26px; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; }
-.heroCopy h1 { max-width: 1050px; margin: 0; font: 400 clamp(58px,8vw,124px)/.9 Georgia,serif; letter-spacing: -.065em; text-wrap: balance; }
+.heroCopy h1 { max-width: 900px; margin: 0; font: 400 clamp(38px,5.3vw,78px)/.93 Georgia,serif; letter-spacing: -.06em; text-wrap: balance; }
 .heroCopy > span { display: block; max-width: 680px; margin-top: 30px; color: rgba(255,255,255,.86); font-size: 17px; line-height: 1.6; text-wrap: balance; }
 .detailIntro { display: grid; grid-template-columns: minmax(0,1.05fr) minmax(380px,.95fr); gap: 10vw; padding: clamp(110px,10vw,160px) 6vw; border-bottom: 1px solid rgba(17,17,17,.14); }
 .detailIntro h2,
@@ -67,7 +67,7 @@
   .cardCopy h2 { margin-top: 52px; }
   .detailHero { height: 88svh; min-height: 620px; }
   .heroCopy { right: 24px; bottom: 56px; left: 24px; }
-  .heroCopy h1 { font-size: 56px; }
+  .heroCopy h1 { font-size: 44px; }
   .detailIntro,
   .inclusions,
   .conditions { grid-template-columns: 1fr; gap: 54px; padding: 88px 24px; }

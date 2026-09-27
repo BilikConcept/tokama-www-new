@@ -859,7 +859,7 @@
 .packageWeekdays legend { padding: 0 8px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; }
 .packageWeekdays p { margin: 0 0 14px; color: #777; font-size: 12px; }
 .offerItems { grid-column: 1/-1; padding: 22px; border: 1px solid var(--line); border-radius: 20px; }
-.offerItem { display: grid; grid-template-columns: 1.1fr 1.5fr 90px 130px 36px; gap: 8px; margin-top: 10px; }
+.offerItem { display: grid; grid-template-columns: 1.1fr 1.5fr 150px 36px; gap: 8px; margin-top: 10px; }
 .offerItem input { width: 100%; min-width: 0; padding: 12px; border: 1px solid var(--line); background: #fff; }
 .offerItem button { border: 0; background: #111; color: #fff; cursor: pointer; }
 .offerTotal { display: block; margin-top: 22px; text-align: right; font: 400 26px/1.1 Georgia,serif; }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { isPackageArrivalAvailable } from "@/lib/tokama/packageAvailability";
+import { isPackageArrivalAvailable, validatePackageStay } from "@/lib/tokama/packageAvailability";
 import styles from "./TokamaDateRangePicker.module.css";
 
 type Locale = "pl" | "en";
@@ -236,11 +236,10 @@ export function TokamaDateRangePicker({
                   }
 
                   const iso = toIso(date);
-                  const unavailableForPackage = Boolean(availableWeekdays) && !isPackageArrivalAvailable(iso, {
-                    weekdays: availableWeekdays,
-                    valid_from: validFrom,
-                    valid_to: validTo,
-                  });
+                  const packageAvailability = { weekdays: availableWeekdays, valid_from: validFrom, valid_to: validTo };
+                  const unavailableForPackage = Boolean(availableWeekdays) && (exactNights
+                    ? !validatePackageStay(iso, toIso(addDays(date, exactNights)), packageAvailability)
+                    : !isPackageArrivalAvailable(iso, packageAvailability));
                   const disabled = iso < todayIso || unavailableForPackage;
                   const isStart = iso === checkin;
                   const isEnd = iso === checkout;

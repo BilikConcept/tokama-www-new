@@ -27,6 +27,7 @@ type RequestBody = {
   guest_message?: string;
   discount_code?: string;
   package_slug?: string;
+  individual_offer_token?: string;
   terms_accepted: boolean;
   terms_version: string;
   privacy_acknowledged: boolean;
@@ -420,6 +421,12 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
+    const offerToken=String(body.individual_offer_token||"").trim();
+    const {data:individualOffer}=offerToken?await supabase.from("tokama_individual_offers").select("id,status,checkin,checkout,currency,variants,accepted_variant_id,valid_until").eq("public_token",offerToken).eq("status","accepted").maybeSingle():{data:null};
+    if(offerToken&&!individualOffer) return NextResponse.json({ok:false,code:"OFFER_UNAVAILABLE",message:"Oferta indywidualna nie jest dostępna."},{status:400});
+    if(individualOffer&&(body.checkin!==individualOffer.checkin||body.checkout!==individualOffer.checkout)) return NextResponse.json({ok:false,code:"OFFER_DATES",message:"Termin oferty indywidualnej nie może zostać zmieniony."},{status:400});
+    const acceptedVariant=(Array.isArray(individualOffer?.variants)?individualOffer.variants:[]).find((variant:any)=>variant.id===individualOffer?.accepted_variant_id);
+    if(individualOffer&&!acceptedVariant) return NextResponse.json({ok:false,code:"OFFER_VARIANT",message:"Brak zaakceptowanego wariantu oferty."},{status:400});
 
     const nights = getNights(body.checkin, body.checkout);
     const adults = Math.max(1, Number(body.adults || 1));
@@ -427,8 +434,8 @@ export async function POST(request: Request) {
 
     const maxAdultsPerHouse = Number(settings.max_adults_per_house || 7);
     const housesTotal = Number(settings.houses_total || 3);
-    const minNights = Math.max(Number(settings.min_nights || 2), Number(selectedPackage?.min_nights || 1));
-    const currency = settings.currency || "PLN";
+    const minNights = individualOffer ? nights : Math.max(Number(settings.min_nights || 2), Number(selectedPackage?.min_nights || 1));
+    const currency = individualOffer?.currency || settings.currency || "PLN";
 
     const basePrice =
       Number(settings.base_price_per_house_per_night_cents) ||
@@ -483,7 +490,7 @@ export async function POST(request: Request) {
       basePriceCents: basePrice,
       rules: pricingRules || [],
     });
-    const stayPrice = packagePrice > 0 ? packagePrice * housesCount : dynamicPricing.totalCents;
+    const stayPrice = acceptedVariant ? Number(acceptedVariant.total_cents||0) : packagePrice > 0 ? packagePrice * housesCount : dynamicPricing.totalCents;
 
     const activeReservationStatuses = [
       "requested",
@@ -686,6 +693,8 @@ export async function POST(request: Request) {
         package_slug_at_booking: selectedPackage?.slug || null,
         package_name_at_booking: selectedPackage?.name || null,
         package_price_cents_at_booking: packagePrice || null,
+        individual_offer_id: individualOffer?.id || null,
+        individual_offer_variant_id: individualOffer?.accepted_variant_id || null,
         pricing_breakdown: packagePrice > 0 ? [] : dynamicPricing.nightlyPrices,
         terms_version: TOKAMA_TERMS_VERSION,
         terms_accepted_at: acceptedAt,

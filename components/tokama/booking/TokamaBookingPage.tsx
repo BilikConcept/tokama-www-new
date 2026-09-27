@@ -41,6 +41,7 @@ type BookingPackage = {
   valid_from: string | null;
   valid_to: string | null;
 };
+type BookingIndividualOffer = { id:string; offer_number:string; checkin:string; checkout:string; guests:number; currency:string; accepted_variant_id:string; variants:{id:string;label:string;total_cents:number}[] };
 
 const content = {
   pl: {
@@ -217,10 +218,12 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
   const params = useSearchParams();
   const t = content[locale];
   const packageSlug = params.get("package") || "";
+  const individualOfferToken = params.get("individual_offer") || "";
 
   const [settings, setSettings] = useState<BookingSettings>(fallbackSettings);
   const [dateSignals, setDateSignals] = useState<Record<string, { level: "calm" | "popular" | "hot"; available_houses: number; price_cents: number }>>({});
   const [selectedPackage, setSelectedPackage] = useState<BookingPackage | null>(null);
+  const [individualOffer, setIndividualOffer] = useState<BookingIndividualOffer | null>(null);
   const [submitStatus, setSubmitStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [submitErrorMessage, setSubmitErrorMessage] = useState<string | null>(null);
   const [availabilitySuggestions, setAvailabilitySuggestions] = useState<
@@ -277,12 +280,22 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
     void loadBookingData();
   }, [packageSlug]);
 
+  useEffect(() => {
+    if (!individualOfferToken) return;
+    fetch(`/api/tokama-offers/${individualOfferToken}`).then(async response => {
+      const body=await response.json(); if(!response.ok || !body.offer?.accepted_variant_id) throw new Error(body.message || "Oferta nie została zaakceptowana.");
+      setIndividualOffer(body.offer); setCheckin(body.offer.checkin); setCheckout(body.offer.checkout); setAdults(Math.max(1,Number(body.offer.guests||1))); setChildren(0);
+    }).catch(error=>{setSubmitStatus("error");setSubmitErrorMessage(error.message);});
+  },[individualOfferToken]);
+
   const nights = useMemo(() => getNights(checkin, checkout), [checkin, checkout]);
   const housesNeeded = useMemo(
     () => getHousesNeeded(adults, settings.max_adults_per_house),
     [adults, settings.max_adults_per_house]
   );
   const stayPrice = useMemo(() => {
+    const acceptedVariant=individualOffer?.variants?.find(item=>item.id===individualOffer.accepted_variant_id);
+    if(acceptedVariant) return Number(acceptedVariant.total_cents||0);
     const packagePrice = Number(selectedPackage?.package_price_cents || 0);
     return packagePrice > 0
       ? packagePrice * housesNeeded
@@ -293,7 +306,7 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
           basePriceCents: settings.base_price_per_house_per_night_cents,
           rules: settings.pricing_rules,
         }).totalCents;
-  }, [checkin, checkout, housesNeeded, settings.base_price_per_house_per_night_cents, settings.pricing_rules, selectedPackage?.package_price_cents]);
+  }, [checkin, checkout, housesNeeded, settings.base_price_per_house_per_night_cents, settings.pricing_rules, selectedPackage?.package_price_cents, individualOffer]);
 
   const discountCents = useMemo(
     () =>
@@ -441,6 +454,7 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
       guest_message: guestMessage,
       discount_code: appliedDiscount?.code || undefined,
       package_slug: selectedPackage?.slug || undefined,
+      individual_offer_token: individualOfferToken || undefined,
       terms_accepted: termsAccepted,
       terms_version: TOKAMA_TERMS_VERSION,
       privacy_acknowledged: privacyAcknowledged,
@@ -572,7 +586,7 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
           <div className={styles.panelSection}>
             <p className={styles.sectionLabel}>{t.dates}</p>
 
-            <TokamaDateRangePicker
+            {individualOffer ? <div className={styles.packageNotice}><span>TERMIN OFERTY {individualOffer.offer_number}</span><strong>{formatDate(individualOffer.checkin)} — {formatDate(individualOffer.checkout)}</strong><p>Termin jest przypisany do zaakceptowanej oferty i nie może zostać zmieniony.</p></div> : <TokamaDateRangePicker
               locale={locale}
               checkin={checkin}
               checkout={checkout}
@@ -584,7 +598,7 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
               onCheckinChange={setCheckin}
               onCheckoutChange={setCheckout}
               dateSignals={dateSignals}
-            />
+            />}
           </div>
 
           <div className={styles.panelSection}>

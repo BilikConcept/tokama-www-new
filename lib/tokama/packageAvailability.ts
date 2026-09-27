@@ -20,7 +20,13 @@ export function isPackageArrivalAvailable(value: string, availability: PackageAv
 }
 
 export function validatePackageStay(checkin: string, checkout: string, availability: PackageAvailability) {
-  if (!isPackageArrivalAvailable(checkin, availability)) return false;
-  if (availability.valid_to && checkout > availability.valid_to) return false;
+  if (!checkin || !checkout || checkout <= checkin) return false;
+  const current = new Date(`${checkin}T12:00:00Z`);
+  const end = new Date(`${checkout}T12:00:00Z`);
+  while (current <= end) {
+    const iso = current.toISOString().slice(0, 10);
+    if (!isPackageArrivalAvailable(iso, availability)) return false;
+    current.setUTCDate(current.getUTCDate() + 1);
+  }
   return true;
 }

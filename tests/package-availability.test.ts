@@ -12,3 +12,7 @@ test("enforces package validity period for the whole stay", () => {
   assert.equal(validatePackageStay("2026-09-12", "2026-09-14", availability), true);
   assert.equal(validatePackageStay("2026-09-29", "2026-10-01", availability), false);
 });
+
+test("rejects a stay when checkout falls on an inactive weekday", () => {
+  assert.equal(validatePackageStay("2026-10-02", "2026-10-03", { weekdays: [1, 2, 3, 4, 5] }), false);
+});
