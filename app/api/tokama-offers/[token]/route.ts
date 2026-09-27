@@ -42,11 +42,14 @@ export async function POST(request: Request, context: { params: Promise<{ token:
     if (existing?.public_code) return NextResponse.json({ ok:true, payment_url:`/platnosc/${existing.public_code}` });
   }
 
-  const { data: settings, error: settingsError } = await supabase.from("tokama_booking_settings").select("max_adults_per_house,houses_total,base_price_per_house_per_night_cents,min_nights").limit(1).maybeSingle();
-  if (settingsError || !settings) return NextResponse.json({ message: "Nie udało się odczytać ustawień rezerwacji." }, { status: 500 });
+  const [{ data: settings, error: settingsError }, { count: housesTotal, error: housesCountError }] = await Promise.all([
+    supabase.from("tokama_booking_settings").select("max_adults_per_house,base_price_per_house_per_night_cents,min_nights").limit(1).maybeSingle(),
+    supabase.from("tokama_houses").select("id", { count: "exact", head: true }),
+  ]);
+  if (settingsError || housesCountError || !settings || !housesTotal) return NextResponse.json({ message: settingsError?.message || housesCountError?.message || "Nie udało się odczytać ustawień rezerwacji." }, { status: 500 });
   const guests = Math.max(1, Number(offer.guests || 1));
   const housesNeeded = Math.ceil(guests / Math.max(1, Number(settings.max_adults_per_house || 7)));
-  const availableHouseIds = await getAvailableHouseIdsForOffer({ supabase, checkin: offer.checkin, checkout: offer.checkout, housesNeeded:Number(settings.houses_total||3), excludeOfferId: offer.id });
+  const availableHouseIds = await getAvailableHouseIdsForOffer({ supabase, checkin: offer.checkin, checkout: offer.checkout, housesNeeded:housesTotal, excludeOfferId: offer.id });
   const heldHouseIds = Array.isArray(offer.held_house_ids) ? offer.held_house_ids : [];
   const verifiedHouseIds = heldHouseIds.filter((houseId: string) => availableHouseIds.includes(houseId)).slice(0, housesNeeded);
   if (verifiedHouseIds.length < housesNeeded) return NextResponse.json({ message: "Termin nie jest już dostępny dla wymaganej liczby domków. Skontaktuj się z TOKAMA." }, { status: 409 });
