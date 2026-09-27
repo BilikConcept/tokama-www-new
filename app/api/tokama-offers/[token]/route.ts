@@ -42,7 +42,7 @@ export async function POST(request: Request, context: { params: Promise<{ token:
     if (existing?.public_code) return NextResponse.json({ ok:true, payment_url:`/platnosc/${existing.public_code}` });
   }
 
-  const { data: settings, error: settingsError } = await supabase.from("tokama_booking_settings").select("max_adults_per_house,houses_total,base_price_per_house_per_night_cents,min_nights").eq("id", true).single();
+  const { data: settings, error: settingsError } = await supabase.from("tokama_booking_settings").select("max_adults_per_house,houses_total,base_price_per_house_per_night_cents,min_nights").limit(1).maybeSingle();
   if (settingsError || !settings) return NextResponse.json({ message: "Nie udało się odczytać ustawień rezerwacji." }, { status: 500 });
   const guests = Math.max(1, Number(offer.guests || 1));
   const housesNeeded = Math.ceil(guests / Math.max(1, Number(settings.max_adults_per_house || 7)));

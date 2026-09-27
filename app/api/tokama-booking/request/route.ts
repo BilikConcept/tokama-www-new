@@ -389,8 +389,8 @@ export async function POST(request: Request) {
       supabase
         .from("tokama_booking_settings")
         .select("*")
-        .eq("id", true)
-        .single(),
+        .limit(1)
+        .maybeSingle(),
       supabase
         .from("tokama_addons")
         .select("*")

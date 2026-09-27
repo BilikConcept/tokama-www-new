@@ -25,7 +25,8 @@ export async function POST(request: Request) {
   const variants = Array.isArray(offer.variants) ? offer.variants : [];
   if (!variants.length) return NextResponse.json({ message: "Dodaj co najmniej jeden wariant oferty." }, { status: 400 });
   if (!offer.checkin || !offer.checkout || offer.checkout <= offer.checkin) return NextResponse.json({ message: "Ustaw poprawny termin oferty." }, { status: 400 });
-  const { data: settings } = await auth.supabase.from("tokama_booking_settings").select("max_adults_per_house,houses_total").eq("id", true).single();
+  const { data: settings, error: settingsError } = await auth.supabase.from("tokama_booking_settings").select("max_adults_per_house,houses_total").limit(1).maybeSingle();
+  if (settingsError || !settings) return NextResponse.json({ message: settingsError?.message || "Nie udało się odczytać ustawień rezerwacji." }, { status: 500 });
   const maxGuestsPerHouse = Math.max(1, Number(settings?.max_adults_per_house || 7));
   const housesNeeded = Math.ceil(Math.max(1, Number(offer.guests || 1)) / maxGuestsPerHouse);
   if (housesNeeded > Number(settings?.houses_total || 3)) return NextResponse.json({ message: `Ta oferta wymaga ${housesNeeded} domków, a dostępne są maksymalnie ${settings?.houses_total || 3}.` }, { status: 400 });

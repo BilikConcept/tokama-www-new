@@ -13,7 +13,7 @@ export async function GET() {
     const start = iso(new Date());
     const end = addDays(start, 180);
     const [settingsResult, rulesResult, housesResult, reservationsResult, externalResult, blocksResult, offersResult] = await Promise.all([
-      supabase.from("tokama_booking_settings").select("base_price_per_house_per_night_cents").eq("id", true).single(),
+      supabase.from("tokama_booking_settings").select("base_price_per_house_per_night_cents").limit(1).maybeSingle(),
       supabase.from("tokama_pricing_rules").select("id,name,price_cents,valid_from,valid_to,weekdays,priority,is_active").eq("is_active", true).order("priority", { ascending: false }),
       supabase.from("tokama_houses").select("id,code"),
       supabase.from("tokama_reservations").select("id,checkin,checkout,status").lt("checkin", end).gt("checkout", start).in("status", ["requested","approved","payment_sent","paid","confirmed"]),
