@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { isPackageArrivalAvailable } from "@/lib/tokama/packageAvailability";
 import styles from "./TokamaDateRangePicker.module.css";
 
 type Locale = "pl" | "en";
@@ -11,6 +12,9 @@ type TokamaDateRangePickerProps = {
   checkout: string;
   minNights: number;
   exactNights?: number;
+  availableWeekdays?: number[];
+  validFrom?: string | null;
+  validTo?: string | null;
   onCheckinChange: (value: string) => void;
   onCheckoutChange: (value: string) => void;
   dateSignals?: Record<string, { level: "calm" | "popular" | "hot"; available_houses: number; price_cents: number }>;
@@ -127,6 +131,9 @@ export function TokamaDateRangePicker({
   checkout,
   minNights,
   exactNights,
+  availableWeekdays,
+  validFrom,
+  validTo,
   onCheckinChange,
   onCheckoutChange,
   dateSignals = {},
@@ -229,7 +236,12 @@ export function TokamaDateRangePicker({
                   }
 
                   const iso = toIso(date);
-                  const disabled = iso < todayIso;
+                  const unavailableForPackage = Boolean(availableWeekdays) && !isPackageArrivalAvailable(iso, {
+                    weekdays: availableWeekdays,
+                    valid_from: validFrom,
+                    valid_to: validTo,
+                  });
+                  const disabled = iso < todayIso || unavailableForPackage;
                   const isStart = iso === checkin;
                   const isEnd = iso === checkout;
                   const inRange = isBetween(iso, checkin, checkout);

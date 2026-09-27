@@ -8,6 +8,7 @@ const resources = {
   media: "tokama_media_assets",
   "website-media": "tokama_website_media",
   sections: "tokama_global_sections",
+  "individual-offers": "tokama_individual_offers",
 } as const;
 type ContentAdminSupabase = Extract<Awaited<ReturnType<typeof requireContentAdmin>>, { ok: true }>['supabase'];
 
@@ -59,7 +60,8 @@ export async function POST(request: Request, context: { params: Promise<{ resour
   if (!table) return NextResponse.json({ message: "Nieznany zasób." }, { status: 404 });
   const body = await request.json();
   if (resource === "packages") body.slug = slugify(body.slug || body.name || crypto.randomUUID());
-  const actor = resource === "media" || resource === "packages" ? { created_by: auth.user.id } : resource === "articles" ? { created_by: auth.user.id, updated_by: auth.user.id } : { updated_by: auth.user.id };
+  if (resource === "individual-offers") body.offer_number = body.offer_number || `TOK-${new Date().getFullYear()}-${crypto.randomUUID().slice(0, 6).toUpperCase()}`;
+  const actor = resource === "media" || resource === "packages" ? { created_by: auth.user.id } : resource === "articles" || resource === "individual-offers" ? { created_by: auth.user.id, updated_by: auth.user.id } : { updated_by: auth.user.id };
   const { data, error } = await auth.supabase.from(table).insert({ ...body, ...actor }).select().single();
   if (!error && resource === "articles" && data?.seo?.homepageFeatured) await clearOtherHomepageArticles(auth.supabase, data.id);
   if (!error) revalidatePublicResource(resource);
@@ -72,7 +74,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ resou
   if (!table) return NextResponse.json({ message: "Nieznany zasób." }, { status: 404 });
   const { id, ...changes } = await request.json(); if (!id) return NextResponse.json({ message: "Brak id." }, { status: 400 });
   if (resource === "packages" && (changes.slug || changes.name)) changes.slug = slugify(changes.slug || changes.name);
-  const update = { ...changes, updated_at: new Date().toISOString(), ...(resource === "articles" || resource === "sections" || resource === "website-media" ? { updated_by: auth.user.id } : {}) };
+  const update = { ...changes, updated_at: new Date().toISOString(), ...(resource === "articles" || resource === "sections" || resource === "website-media" || resource === "individual-offers" ? { updated_by: auth.user.id } : {}) };
 
   if (resource === "articles") {
     const { data: current } = await auth.supabase.from(table).select("*").eq("id", id).single();

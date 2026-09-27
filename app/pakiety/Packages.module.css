@@ -21,18 +21,18 @@
 .detailHero > img,
 .detailHero > video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .heroShade { position: absolute; inset: 0; background: linear-gradient(180deg,rgba(0,0,0,.16),rgba(0,0,0,.7)); }
-.heroCopy { position: absolute; right: 6vw; bottom: 7vw; left: 6vw; }
+.heroCopy { position: absolute; right: 6vw; bottom: 9vh; left: 6vw; display: flex; align-items: center; flex-direction: column; text-align: center; }
 .heroCopy > p { margin: 0 0 26px; font-size: 10px; letter-spacing: .28em; text-transform: uppercase; }
-.heroCopy h1 { max-width: 1100px; margin: 0; font: 400 clamp(58px,8vw,124px)/.88 Georgia,serif; letter-spacing: -.07em; text-wrap: balance; }
-.heroCopy > span { display: block; max-width: 680px; margin-top: 28px; color: rgba(255,255,255,.82); font-size: 17px; line-height: 1.6; }
-.detailIntro { display: grid; grid-template-columns: minmax(0,1.05fr) minmax(380px,.95fr); gap: 10vw; padding: 140px 6vw; border-bottom: 1px solid rgba(17,17,17,.14); }
+.heroCopy h1 { max-width: 1050px; margin: 0; font: 400 clamp(58px,8vw,124px)/.9 Georgia,serif; letter-spacing: -.065em; text-wrap: balance; }
+.heroCopy > span { display: block; max-width: 680px; margin-top: 30px; color: rgba(255,255,255,.86); font-size: 17px; line-height: 1.6; text-wrap: balance; }
+.detailIntro { display: grid; grid-template-columns: minmax(0,1.05fr) minmax(380px,.95fr); gap: 10vw; padding: clamp(110px,10vw,160px) 6vw; border-bottom: 1px solid rgba(17,17,17,.14); }
 .detailIntro h2,
 .sectionHeading h2 { max-width: 760px; margin: 30px 0 0; font: 400 clamp(50px,6.5vw,98px)/.9 Georgia,serif; letter-spacing: -.065em; text-wrap: balance; }
 .detailText > p { margin: 0 0 24px; color: #555; font: 400 19px/1.7 Georgia,serif; }
 .bookingButton { display: inline-flex; align-items: center; justify-content: center; min-height: 58px; margin-top: 24px; padding: 0 24px; border: 1px solid #111; background: #111; color: #fff; text-decoration: none; transition: color .2s, background .2s; }
 .bookingButton:hover { color: #111; background: #fff; }
 .inclusions,
-.conditions { display: grid; grid-template-columns: minmax(260px,.75fr) minmax(460px,1.25fr); gap: 8vw; padding: 120px 6vw; border-bottom: 1px solid rgba(17,17,17,.14); }
+.conditions { display: grid; grid-template-columns: minmax(260px,.75fr) minmax(460px,1.25fr); gap: 8vw; padding: clamp(100px,9vw,140px) 6vw; border-bottom: 1px solid rgba(17,17,17,.14); }
 .inclusions > div:last-child,
 .conditionList { border-top: 1px solid rgba(17,17,17,.2); }
 .inclusions article { display: grid; grid-template-columns: 48px 1fr; gap: 22px; align-items: start; padding: 28px 0; border-bottom: 1px solid rgba(17,17,17,.2); }
@@ -66,7 +66,7 @@
   .cardCopy { min-height: 300px; padding: 40px 24px; }
   .cardCopy h2 { margin-top: 52px; }
   .detailHero { height: 88svh; min-height: 620px; }
-  .heroCopy { right: 24px; bottom: 48px; left: 24px; }
+  .heroCopy { right: 24px; bottom: 56px; left: 24px; }
   .heroCopy h1 { font-size: 56px; }
   .detailIntro,
   .inclusions,

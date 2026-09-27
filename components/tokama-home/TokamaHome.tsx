@@ -300,6 +300,11 @@ const offerSlides =
 
     return () => window.clearTimeout(timeout);
   }, [offerSlide, offerSlides.length]);
+  useEffect(() => {
+    if (packages.length < 2) return;
+    const timeout = window.setTimeout(() => setPackageSlide(current => (current + 1) % packages.length), 6000);
+    return () => window.clearTimeout(timeout);
+  }, [packageSlide, packages.length]);
   // Footer scroll animation
   useEffect(() => {
     const stage = footerStageRef.current;
@@ -717,25 +722,20 @@ const offerSlides =
       </section>
 
       {packages.length ? (
-        <section className={styles.cmsPackages} data-tokama-dark-header>
-          <div className={styles.cmsPackageMedia}>
-            {activePackage.heroKind === "video" && activePackage.heroUrl ? <video key={activePackage.heroUrl} src={activePackage.heroUrl} autoPlay muted loop playsInline /> : null}
-            {activePackage.heroKind === "image" && activePackage.heroUrl ? <Image key={activePackage.heroUrl} src={activePackage.heroUrl} alt={activePackage.heroAlt || activePackage.name} fill sizes="100vw" /> : null}
-            {!activePackage.heroUrl ? <Image src="/images/tokama-wnetrza/0_POZIOM.jpg" alt="Wnętrze domku TOKAMA" fill sizes="100vw" /> : null}
-          </div>
-          <div className={styles.cmsPackageShade} />
-          <div className={styles.cmsSectionHeader}>
-            <p>{locale === "pl" ? "PAKIETY TOKAMA" : "TOKAMA PACKAGES"}</p>
-            <Link href="/pakiety">{locale === "pl" ? "Wszystkie pakiety" : "All packages"} →</Link>
-          </div>
-          {packages.length > 1 ? <div className={styles.cmsPackageTabs} role="tablist" aria-label={locale === "pl" ? "Pakiety TOKAMA" : "TOKAMA packages"}>{packages.map((item, index) => <button key={item.id} type="button" role="tab" aria-selected={index === packageSlide} onClick={() => setPackageSlide(index)}><span>{String(index + 1).padStart(2, "0")}</span>{item.name}</button>)}</div> : null}
-          <div className={styles.cmsPackageCopy}>
-            <span>{activePackage.eyebrow || (locale === "pl" ? "PAKIET TOKAMA" : "TOKAMA PACKAGE")}</span>
-            <h2>{activePackage.name}</h2>
-            {activePackage.shortDescription ? <p>{activePackage.shortDescription}</p> : null}
-            <div className={styles.cmsPackageActions}>
-              {activePackage.priceCents ? <strong>{new Intl.NumberFormat(locale === "pl" ? "pl-PL" : "en-GB", { style: "currency", currency: activePackage.currency, maximumFractionDigits: 0 }).format(activePackage.priceCents / 100)}</strong> : null}
-              <Link href={`/pakiety/${activePackage.slug}`}>{locale === "pl" ? "Poznaj pakiet" : "Explore package"}</Link>
+        <section className={styles.offers} data-tokama-dark-header aria-label={locale === "pl" ? "Pakiety TOKAMA" : "TOKAMA packages"}>
+          <div className={styles.offersVisual}>
+            {activePackage.heroKind === "video" && activePackage.heroUrl ? <video key={activePackage.heroUrl} className={styles.offersVideo} src={activePackage.heroUrl} autoPlay muted loop playsInline /> : null}
+            {activePackage.heroKind === "image" && activePackage.heroUrl ? <Image key={activePackage.heroUrl} className={styles.offersVideo} src={activePackage.heroUrl} alt={activePackage.heroAlt || activePackage.name} fill sizes="100vw" /> : null}
+            {!activePackage.heroUrl ? <Image className={styles.offersVideo} src="/images/tokama-wnetrza/0_POZIOM.jpg" alt="Wnętrze domku TOKAMA" fill sizes="100vw" /> : null}
+            <div className={styles.offersShade} />
+            <div className={styles.offersTabs} role="tablist">{packages.map((item,index)=>{const isActive=index===packageSlide;return <button key={item.id} type="button" role="tab" aria-selected={isActive} className={styles.offersTab} onClick={()=>setPackageSlide(index)}><span className={styles.offersTabLabel}>{item.name}</span><span className={styles.offersTabTrack} aria-hidden="true">{isActive?<span key={packageSlide} className={styles.offersTabProgress}/>:null}</span></button>;})}</div>
+            <div key={packageSlide} className={`${styles.offersContent} ${styles.offersSlideContent}`}>
+              <p className={styles.offersKicker}>{activePackage.eyebrow || (locale === "pl" ? "PAKIET TOKAMA" : "TOKAMA PACKAGE")}</p>
+              <h2 className={styles.offersTitle}>{activePackage.name}</h2>
+              {activePackage.shortDescription ? <p className={styles.offersText}>{activePackage.shortDescription}</p> : null}
+              {activePackage.priceCents ? <p className={styles.packagePrice}>{new Intl.NumberFormat(locale === "pl" ? "pl-PL" : "en-GB", { style: "currency", currency: activePackage.currency, maximumFractionDigits: 0 }).format(activePackage.priceCents / 100)}</p> : null}
+              <Link className={styles.offersButton} href={`/pakiety/${activePackage.slug}`}>{locale === "pl" ? "Poznaj pakiet" : "Explore package"}</Link>
+              <Link className={styles.allPackagesLink} href="/pakiety">{locale === "pl" ? "Wszystkie pakiety" : "All packages"} →</Link>
             </div>
           </div>
         </section>

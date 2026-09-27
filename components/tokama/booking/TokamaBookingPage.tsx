@@ -22,6 +22,7 @@ import {
   TOKAMA_TERMS_VERSION,
 } from "@/lib/tokama/legal";
 import { TokamaDateRangePicker } from "./TokamaDateRangePicker";
+import { validatePackageStay } from "@/lib/tokama/packageAvailability";
 import styles from "./TokamaBookingPage.module.css";
 
 type Locale = "pl" | "en";
@@ -36,6 +37,9 @@ type BookingPackage = {
   min_nights: number;
   max_guests: number | null;
   booking_note: string;
+  weekdays: number[];
+  valid_from: string | null;
+  valid_to: string | null;
 };
 
 const content = {
@@ -305,6 +309,9 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
   const packageDurationMismatch = Boolean(
     selectedPackage && nights > 0 && nights !== selectedPackage.min_nights
   );
+  const packageDateMismatch = Boolean(
+    selectedPackage && checkin && checkout && !validatePackageStay(checkin, checkout, selectedPackage)
+  );
   const tooManyGuests = housesNeeded > settings.houses_total;
   const maxAdults = settings.houses_total * settings.max_adults_per_house;
 
@@ -408,6 +415,12 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
           ? `Ten pakiet obejmuje dokładnie ${selectedPackage?.min_nights} ${polishNightLabel(selectedPackage?.min_nights || 0)}. Jeśli chcesz przedłużyć pobyt, skontaktuj się z hostem.`
           : `This package is available for exactly ${selectedPackage?.min_nights} nights. To extend your stay, please contact the host.`
       );
+      return;
+    }
+
+    if (packageDateMismatch) {
+      setSubmitStatus("error");
+      setSubmitErrorMessage(locale === "pl" ? "Ten pakiet nie jest dostępny w wybranym terminie lub dniu przyjazdu." : "This package is not available for the selected dates or arrival day.");
       return;
     }
 
@@ -565,6 +578,9 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
               checkout={checkout}
               minNights={effectiveMinNights}
               exactNights={selectedPackage?.min_nights}
+              availableWeekdays={selectedPackage?.weekdays}
+              validFrom={selectedPackage?.valid_from}
+              validTo={selectedPackage?.valid_to}
               onCheckinChange={setCheckin}
               onCheckoutChange={setCheckout}
               dateSignals={dateSignals}
@@ -710,6 +726,8 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
               </p>
             ) : null}
 
+            {packageDateMismatch ? <p className={styles.warning}>{locale === "pl" ? "Wybierz aktywny dzień przyjazdu mieszczący się w terminie obowiązywania pakietu." : "Choose an available arrival day within the package validity period."}</p> : null}
+
             {tooManyGuests && (
               <p className={styles.warning}>
                 {locale === "pl"
@@ -851,6 +869,7 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
               !checkout ||
               isBelowMinNights ||
               packageDurationMismatch ||
+              packageDateMismatch ||
               tooManyGuests ||
               !termsAccepted ||
               !privacyAcknowledged

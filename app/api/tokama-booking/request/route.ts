@@ -13,6 +13,7 @@ import {
   validateLegalAcceptance,
 } from "@/lib/tokama/legal";
 import { calculateDynamicStayPrice } from "@/lib/tokama/pricing";
+import { validatePackageStay } from "@/lib/tokama/packageAvailability";
 
 type RequestBody = {
   locale: "pl" | "en";
@@ -436,22 +437,12 @@ export async function POST(request: Request) {
 
     const housesCount = getHousesNeeded(adults, maxAdultsPerHouse);
 
-    if (selectedPackage?.valid_from && body.checkin < selectedPackage.valid_from) {
-      return NextResponse.json({ ok: false, code: "PACKAGE_DATES", message: "Pakiet nie obowiązuje w wybranym terminie." }, { status: 400 });
-    }
-    if (selectedPackage?.valid_to && body.checkout > selectedPackage.valid_to) {
+    if (selectedPackage && !validatePackageStay(body.checkin, body.checkout, selectedPackage)) {
       return NextResponse.json({ ok: false, code: "PACKAGE_DATES", message: "Pakiet nie obowiązuje w wybranym terminie." }, { status: 400 });
     }
     if (selectedPackage?.max_guests && adults + children > Number(selectedPackage.max_guests)) {
       return NextResponse.json({ ok: false, code: "PACKAGE_GUESTS", message: "Liczba gości przekracza limit tego pakietu." }, { status: 400 });
     }
-    if (selectedPackage?.weekdays?.length) {
-      const checkinDay = new Date(`${body.checkin}T12:00:00Z`).getUTCDay() || 7;
-      if (!selectedPackage.weekdays.includes(checkinDay)) {
-        return NextResponse.json({ ok: false, code: "PACKAGE_WEEKDAY", message: "Pakiet nie jest dostępny w wybranym dniu przyjazdu." }, { status: 400 });
-      }
-    }
-
     const packageNights = Number(selectedPackage?.min_nights || 0);
 
     if (selectedPackage && nights !== packageNights) {

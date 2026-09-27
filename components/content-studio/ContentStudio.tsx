@@ -14,9 +14,9 @@ import type { ArticleRendererMedia } from "./ArticleRenderer";
 import styles from "./ContentStudio.bilik.module.css";
 
 type Row = Record<string, any>;
-type Tab = "dashboard" | "stays" | "calendars" | "pricing" | "discounts" | "packages" | "media" | "website-media" | "articles" | "sections";
-const labels: Record<Tab, string> = { dashboard: "Home", stays: "Pobyty", calendars: "Kalendarze", pricing: "Ceny", discounts: "Rabaty", packages: "Pakiety", media: "Media", "website-media": "Strona", articles: "Artykuły", sections: "Sekcje" };
-const paths: Record<Tab, string> = { dashboard: "/admin", stays: "/admin/pobyty", calendars: "/admin/kalendarze", pricing: "/admin/ceny", discounts: "/admin/rabaty", packages: "/admin/pakiety", media: "/admin/media", "website-media": "/admin/strona", articles: "/admin/artykuly", sections: "/admin/sekcje" };
+type Tab = "dashboard" | "stays" | "calendars" | "pricing" | "discounts" | "packages" | "individual-offers" | "media" | "website-media" | "articles" | "sections";
+const labels: Record<Tab, string> = { dashboard: "Home", stays: "Pobyty", calendars: "Kalendarze", pricing: "Ceny", discounts: "Rabaty", packages: "Pakiety", "individual-offers": "Oferty indywidualne", media: "Media", "website-media": "Strona", articles: "Artykuły", sections: "Sekcje" };
+const paths: Record<Tab, string> = { dashboard: "/admin", stays: "/admin/pobyty", calendars: "/admin/kalendarze", pricing: "/admin/ceny", discounts: "/admin/rabaty", packages: "/admin/pakiety", "individual-offers": "/admin/oferty-indywidualne", media: "/admin/media", "website-media": "/admin/strona", articles: "/admin/artykuly", sections: "/admin/sekcje" };
 const pathTabs = Object.fromEntries(Object.entries(paths).map(([tab, path]) => [path, tab])) as Record<string, Tab>;
 const heroCopy: Record<Tab, { eyebrow: string; title: React.ReactNode; text: string }> = {
   dashboard: { eyebrow: "TOKAMA OPERATING SYSTEM", title: <>Twoja TOKAMA.<br />Jedno <em>workspace</em>.</>, text: "Pakiety, treści, media i wszystkie pobyty w jednym prywatnym centrum zarządzania." },
@@ -25,6 +25,7 @@ const heroCopy: Record<Tab, { eyebrow: string; title: React.ReactNode; text: str
   pricing: { eyebrow: "DYNAMIC PRICING", title: <>Ceny pod Twoją<br /><em>kontrolą</em>.</>, text: "Ustaw cenę bazową oraz reguły dla sezonów, weekendów, świąt i wybranych dni tygodnia." },
   discounts: { eyebrow: "DISCOUNT CENTER", title: <>Kody i <em>rabaty</em>.</>, text: "Twórz promocje ograniczone terminem i dniami tygodnia, a ich wykorzystanie kontroluj w jednym miejscu." },
   packages: { eyebrow: "STAY PACKAGES", title: <>Pakiety <em>pobytowe</em>.</>, text: "Twórz oferty, przypisuj zdjęcia i łącz je bezpośrednio z systemem rezerwacji." },
+  "individual-offers": { eyebrow: "PRIVATE PROPOSALS", title: <>Oferty szyte<br /><em>na miarę</em>.</>, text: "Twórz, zapisuj i wysyłaj klientom indywidualne propozycje pobytu w standardzie TOKAMA." },
   media: { eyebrow: "MEDIA LIBRARY", title: <>Zdjęcia i <em>nagrania</em>.</>, text: "Jedna biblioteka wszystkich materiałów TOKAMY wraz z opisami, tagami i użyciem." },
   "website-media": { eyebrow: "WEBSITE MEDIA", title: <>Cała strona w <em>jednym miejscu</em>.</>, text: "Zarządzaj mediami przypisanymi do każdej ważnej sekcji strony TOKAMA." },
   articles: { eyebrow: "ARTICLE STUDIO", title: <>Opowieści i <em>journal</em>.</>, text: "Zaawansowany kreator blokowy do publikowania historii TOKAMY." },
@@ -196,7 +197,7 @@ export function ContentStudio() {
   const load = useCallback(async () => {
     if (!token) return; setBusy(true);
     try {
-      const keys = ["packages", "articles", "media", "website-media", "sections"];
+      const keys = ["packages", "individual-offers", "articles", "media", "website-media", "sections"];
       const results = await Promise.allSettled([
         ...keys.map(key => api(key)),
         hostApi("reservations"),
@@ -248,14 +249,14 @@ export function ContentStudio() {
       <div className={styles.adminHeroShade} />
       <header className={styles.adminNav}>
         <Link href="/admin" aria-label="TOKAMA Content Studio"><Image src="/tokama-logo.svg" alt="TOKAMA" width={154} height={39} priority /></Link>
-        <nav>{(["dashboard","stays","calendars","pricing","discounts","packages","media","website-media","articles","sections"] as Tab[]).map(key => <Link key={key} href={paths[key]} className={tab === key ? styles.active : ""}>{labels[key]}</Link>)}<button onClick={() => client.auth.signOut()}>Logout</button></nav>
+        <nav>{(["dashboard","stays","calendars","pricing","discounts","packages","individual-offers","media","website-media","articles","sections"] as Tab[]).map(key => <Link key={key} href={paths[key]} className={tab === key ? styles.active : ""}>{labels[key]}</Link>)}<button onClick={() => client.auth.signOut()}>Logout</button></nav>
       </header>
       <div className={styles.adminHeroCopy}><p>{copy.eyebrow}</p><h1>{copy.title}</h1><span>{copy.text}</span></div>
       <aside className={styles.heroStatus}><p>LIVE STATUS</p><strong>{pending ? `${pending} ${pending === 1 ? "pobyt czeka" : "pobyty czekają"}` : "Wszystko pod kontrolą"}</strong><span>{busy ? "Synchronizacja danych…" : "Content Studio i HOST są zsynchronizowane."}</span><Link href="/admin/pobyty">Otwórz pobyty</Link></aside>
     </section>
     {message ? <button className={styles.toast} onClick={() => setMessage("")}>{message} ×</button> : null}
     <section className={styles.workspace}>
-      {tab === "dashboard" && <Dashboard data={data} issues={loadIssues} setTab={key => router.push(paths[key])} />}{tab === "stays" && <Stays data={data} hostApi={hostApi} reload={load} notify={setMessage} />}{tab === "calendars" && <CalendarCenter data={data} calendarApi={calendarApi} hostApi={hostApi} reload={load} notify={setMessage} issue={loadIssues.calendars} />}{tab === "pricing" && <PricingCenter hostApi={hostApi} notify={setMessage} />}{tab === "discounts" && <DiscountCenter hostApi={hostApi} notify={setMessage} />}{tab === "packages" && <Packages {...common} />}{tab === "media" && <Media {...common} />}{tab === "website-media" && <WebsiteMedia {...common} />}{tab === "articles" && <Articles {...common} />}{tab === "sections" && <Sections {...common} />}
+      {tab === "dashboard" && <Dashboard data={data} issues={loadIssues} setTab={key => router.push(paths[key])} />}{tab === "stays" && <Stays data={data} hostApi={hostApi} reload={load} notify={setMessage} />}{tab === "calendars" && <CalendarCenter data={data} calendarApi={calendarApi} hostApi={hostApi} reload={load} notify={setMessage} issue={loadIssues.calendars} />}{tab === "pricing" && <PricingCenter hostApi={hostApi} notify={setMessage} />}{tab === "discounts" && <DiscountCenter hostApi={hostApi} notify={setMessage} />}{tab === "packages" && <Packages {...common} />}{tab === "individual-offers" && <IndividualOffers {...common} />}{tab === "media" && <Media {...common} />}{tab === "website-media" && <WebsiteMedia {...common} />}{tab === "articles" && <Articles {...common} />}{tab === "sections" && <Sections {...common} />}
     </section>
   </main>;
 }
@@ -589,6 +590,7 @@ function Packages({ api, data, reload, notify }: ModuleProps) {
       <Field label="Headline" wide><input value={editing.headline} onChange={e=>setEditing({...editing,headline:e.target.value})}/></Field>
       <Field label="Cena regularna (PLN)"><input type="number" value={(editing.regular_price_cents || 0)/100} onChange={e=>setEditing({...editing,regular_price_cents:+e.target.value*100})}/></Field><Field label="Cena pakietowa (PLN)"><input type="number" value={(editing.package_price_cents || 0)/100} onChange={e=>setEditing({...editing,package_price_cents:+e.target.value*100})}/></Field>
       <Field label="Od"><input type="date" value={editing.valid_from || ""} onChange={e=>setEditing({...editing,valid_from:e.target.value||null})}/></Field><Field label="Do"><input type="date" value={editing.valid_to || ""} onChange={e=>setEditing({...editing,valid_to:e.target.value||null})}/></Field>
+      <fieldset className={styles.packageWeekdays}><legend>Aktywne dni przyjazdu</legend><p>Klient będzie mógł rozpocząć pobyt z tym pakietem tylko w zaznaczone dni.</p><div className={styles.weekdayPicker}>{weekdayLabels.map((label,index) => { const day=index+1; const selected=(editing.weekdays || []).includes(day); return <button type="button" key={day} className={selected ? styles.weekdaySelected : ""} onClick={() => setEditing({ ...editing, weekdays: selected ? editing.weekdays.filter((value:number) => value !== day) : [...(editing.weekdays || []),day].sort() })}>{label}</button>; })}</div></fieldset>
       <Field label="Min. nocy"><input type="number" min="1" value={editing.min_nights} onChange={e=>setEditing({...editing,min_nights:+e.target.value})}/></Field><Field label="Maks. gości"><input type="number" min="1" value={editing.max_guests || ""} onChange={e=>setEditing({...editing,max_guests:+e.target.value})}/></Field>
       <Field label="Krótki opis" wide><textarea value={editing.short_description} onChange={e=>setEditing({...editing,short_description:e.target.value})}/></Field><Field label="Pełny opis" wide><textarea rows={5} value={editing.description} onChange={e=>setEditing({...editing,description:e.target.value})}/></Field>
       <Field label="Warunki i ważne informacje" wide><textarea rows={4} value={editing.booking_note || ""} onChange={e=>setEditing({...editing,booking_note:e.target.value})}/></Field><Field label="Zalety i elementy pakietu (każda pozycja w nowej linii)" wide><textarea rows={6} value={(editing.inclusions||[]).join("\n")} onChange={e=>setEditing({...editing,inclusions:e.target.value.split("\n").map((value:string)=>value.trim()).filter(Boolean)})}/></Field>
@@ -598,6 +600,44 @@ function Packages({ api, data, reload, notify }: ModuleProps) {
       <div className={styles.packageMediaField}><div className={styles.mediaFieldHeader}><span>Galeria pakietu</span><small>{(editing.gallery_media_ids||[]).length} wybranych</small></div><div className={styles.packageMediaPicker}>{(data.media||[]).map(asset=><button type="button" key={asset.id} className={(editing.gallery_media_ids||[]).includes(asset.id)?styles.chosen:""} onClick={()=>toggleGallery(asset.id)}>{asset.kind==="video"?<video src={asset.public_url}/>:<img src={asset.public_url} alt={asset.alt_text}/>}<span>{(editing.gallery_media_ids||[]).includes(asset.id)?"DODANE":"DODAJ"}</span></button>)}</div></div>
       {editing.id && editing.slug ? <Link className={styles.publicPackageLink} href={`/pakiety/${editing.slug}`} target="_blank">Otwórz stronę pakietu ↗</Link> : null}
     </div></Modal> : null}
+  </div>;
+}
+
+type OfferLine = { name: string; description: string; quantity: number; unit_price_cents: number };
+const emptyOffer = () => ({ status:"draft", client_name:"", client_email:"", title:"Indywidualny pobyt w TOKAMA", introduction:"Przygotowaliśmy dla Ciebie indywidualną propozycję pobytu.", checkin:"", checkout:"", guests:2, line_items:[{name:"Pobyt w TOKAMA",description:"",quantity:1,unit_price_cents:0}], total_cents:0, currency:"PLN", notes:"", valid_until:"" });
+
+function IndividualOffers({ api, data, reload, notify }: ModuleProps) {
+  const [editing,setEditing]=useState<Row|null>(null);
+  const [preview,setPreview]=useState(false);
+  const [sending,setSending]=useState(false);
+  const items = (editing?.line_items || []) as OfferLine[];
+  const calculatedTotal = items.reduce((sum,item)=>sum + Number(item.quantity || 0) * Number(item.unit_price_cents || 0),0);
+  function updateItem(index:number, changes:Partial<OfferLine>) { setEditing(current => current ? {...current,line_items:(current.line_items || []).map((item:OfferLine,itemIndex:number)=>itemIndex===index?{...item,...changes}:item)} : current); }
+  async function save() {
+    if (!editing) return;
+    if (!editing.client_name || !editing.title) { notify("Uzupełnij klienta i tytuł oferty."); return; }
+    try { const payload={...editing,total_cents:calculatedTotal}; const result=await api("individual-offers",{method:editing.id?"PATCH":"POST",body:JSON.stringify(payload)}); setEditing(result.data); await reload(); notify("Oferta została zapisana jako szkic."); }
+    catch(error){notify((error as Error).message);}
+  }
+  async function send() {
+    if (!editing?.id) { notify("Najpierw zapisz ofertę."); return; }
+    if (!editing.client_email) { notify("Podaj adres e-mail klienta."); return; }
+    setSending(true);
+    try { await api("individual-offers/send",{method:"POST",body:JSON.stringify({id:editing.id,recipient:editing.client_email})}); await reload(); setEditing(null); notify("Oferta została wysłana klientowi."); }
+    catch(error){notify((error as Error).message);} finally {setSending(false);}
+  }
+  return <div className={styles.page}>
+    <div className={styles.toolbar}><p>Zapisuj szkice, dopracowuj warunki, sprawdzaj podgląd i wysyłaj gotową ofertę bezpośrednio do klienta.</p><button className={styles.primary} onClick={()=>setEditing(emptyOffer())}>+ Nowa oferta</button></div>
+    <div className={styles.table}>{(data["individual-offers"]||[]).map(offer=><button key={offer.id} className={styles.row} onClick={()=>setEditing(offer)}><span><b>{offer.client_name}</b><small>{offer.offer_number}</small></span><span>{offer.title}</span><span className={styles.status}>{offer.status}</span><span>{money(offer.total_cents)}</span><b>→</b></button>)}</div>
+    {editing ? <Modal title={editing.offer_number ? `Oferta ${editing.offer_number}` : "Nowa oferta indywidualna"} close={()=>{setEditing(null);setPreview(false);}} save={()=>void save()}><div className={styles.formGrid}>
+      <Field label="Klient"><input value={editing.client_name||""} onChange={e=>setEditing({...editing,client_name:e.target.value})}/></Field><Field label="E-mail klienta"><input type="email" value={editing.client_email||""} onChange={e=>setEditing({...editing,client_email:e.target.value})}/></Field>
+      <Field label="Tytuł oferty" wide><input value={editing.title||""} onChange={e=>setEditing({...editing,title:e.target.value})}/></Field><Field label="Wprowadzenie" wide><textarea rows={4} value={editing.introduction||""} onChange={e=>setEditing({...editing,introduction:e.target.value})}/></Field>
+      <Field label="Przyjazd"><input type="date" value={editing.checkin||""} onChange={e=>setEditing({...editing,checkin:e.target.value||null})}/></Field><Field label="Wyjazd"><input type="date" value={editing.checkout||""} onChange={e=>setEditing({...editing,checkout:e.target.value||null})}/></Field><Field label="Liczba gości"><input type="number" min="1" value={editing.guests||1} onChange={e=>setEditing({...editing,guests:Number(e.target.value)})}/></Field><Field label="Ważna do"><input type="date" value={editing.valid_until||""} onChange={e=>setEditing({...editing,valid_until:e.target.value||null})}/></Field>
+      <div className={styles.offerItems}><div className={styles.mediaFieldHeader}><span>Pozycje oferty</span><button type="button" onClick={()=>setEditing({...editing,line_items:[...items,{name:"",description:"",quantity:1,unit_price_cents:0}]})}>+ Dodaj pozycję</button></div>{items.map((item,index)=><div className={styles.offerItem} key={index}><input aria-label="Nazwa pozycji" placeholder="Nazwa" value={item.name} onChange={e=>updateItem(index,{name:e.target.value})}/><input aria-label="Opis pozycji" placeholder="Krótki opis" value={item.description} onChange={e=>updateItem(index,{description:e.target.value})}/><input aria-label="Ilość" type="number" min="1" value={item.quantity} onChange={e=>updateItem(index,{quantity:Number(e.target.value)})}/><input aria-label="Cena w PLN" type="number" min="0" value={item.unit_price_cents/100} onChange={e=>updateItem(index,{unit_price_cents:Math.round(Number(e.target.value)*100)})}/><button type="button" aria-label="Usuń pozycję" onClick={()=>setEditing({...editing,line_items:items.filter((_,itemIndex)=>itemIndex!==index)})}>×</button></div>)}<strong className={styles.offerTotal}>Razem: {money(calculatedTotal)}</strong></div>
+      <Field label="Uwagi i warunki" wide><textarea rows={5} value={editing.notes||""} onChange={e=>setEditing({...editing,notes:e.target.value})}/></Field>
+      <div className={styles.offerActions}><button type="button" onClick={()=>setPreview(value=>!value)}>{preview?"Zamknij podgląd":"Podgląd oferty"}</button><button type="button" className={styles.primary} disabled={sending||!editing.id} onClick={()=>void send()}>{sending?"Wysyłanie…":"Wyślij klientowi"}</button></div>
+      {preview?<section className={styles.offerPreview}><p>OFERTA INDYWIDUALNA · {editing.offer_number||"SZKIC"}</p><h2>{editing.title}</h2><span>Dla {editing.client_name}</span><p>{editing.introduction}</p>{items.map((item,index)=><article key={index}><div><strong>{item.name}</strong><small>{item.description}</small></div><b>{item.quantity} × {money(item.unit_price_cents)}</b></article>)}<footer><span>Razem</span><strong>{money(calculatedTotal)}</strong></footer>{editing.notes?<p>{editing.notes}</p>:null}</section>:null}
+    </div></Modal>:null}
   </div>;
 }
 
