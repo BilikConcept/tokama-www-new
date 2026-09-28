@@ -324,13 +324,13 @@ function PricingCenter({ hostApi, notify }: { hostApi: (path: string, init?: Req
   if (loading) return <div className={styles.page}><p className={styles.intro}>Wczytywanie cennika…</p></div>;
   return <div className={styles.page}>
     <section className={styles.calendarSection}>
-      <header><div><p className={styles.eyebrow}>BEZPIECZEŃSTWO ZWROTÓW</p><h2>PIN do późnych zwrotów</h2></div><span>{refundPin.configured?"PIN jest ustawiony":"Ustaw pierwszy PIN"}</span></header>
+      <header><div><p className={styles.eyebrow}>BEZPIECZEŃSTWO ZWROTÓW</p><h2>PIN do zwrotów</h2></div><span>{refundPin.configured?"PIN jest ustawiony":"Ustaw pierwszy PIN"}</span></header>
       <div className={styles.refundPinForm}>
         <label><span>Stary PIN</span><input type="password" inputMode="numeric" maxLength={4} value={refundPin.old} onChange={event=>setRefundPin({...refundPin,old:event.target.value.replace(/\D/g,"").slice(0,4)})} placeholder={refundPin.configured?"••••":"Nie jest wymagany"} /></label>
         <label><span>Nowy PIN</span><input type="password" inputMode="numeric" maxLength={4} value={refundPin.next} onChange={event=>setRefundPin({...refundPin,next:event.target.value.replace(/\D/g,"").slice(0,4)})} placeholder="4 cyfry" /></label>
         <button className={styles.primary} disabled={refundPin.next.length!==4 || (refundPin.configured && refundPin.old.length!==4)} onClick={()=>void saveRefundPin()}>Zmień PIN</button>
       </div>
-      <p className={styles.refundPinHint}>Do 14 dni przed przyjazdem zwrot nie wymaga PIN-u. Później system poprosi o ten kod.</p>
+      <p className={styles.refundPinHint}>PIN jest wymagany przy każdym zwrocie, niezależnie od terminu pobytu.</p>
     </section>
     <div className={styles.toolbar}><p className={styles.intro}>Zarządzaj ceną domyślną oraz wyjątkami dla weekendów, sezonów, świąt i wybranych terminów.</p><div><button className={styles.primary} onClick={() => setEditing({ ...emptyPricingRule, weekdays: [...emptyPricingRule.weekdays] })}>+ Nowa reguła</button></div></div>
     <div className={styles.calendarStats}>
@@ -570,7 +570,6 @@ function Stays({ data, hostApi, reload, notify }: { data: Record<string, Row[]>;
       setSelected(null); await reload(); notify("Pobyt został zaktualizowany.");
     } catch (error) { notify((error as Error).message); }
   }
-  const refundNeedsPin = selected ? Math.ceil((new Date(`${selected.checkin}T00:00:00`).getTime() - new Date(`${today}T00:00:00`).getTime()) / 86400000) < 14 : false;
   async function refund() {
     if (!selected) return;
     setRefunding(true);
@@ -608,7 +607,7 @@ function Stays({ data, hostApi, reload, notify }: { data: Record<string, Row[]>;
         {!["cancelled","rejected"].includes(selected.status) ? <button className={styles.danger} onClick={() => void action("cancel")}>Anuluj pobyt</button> : null}
         {selected.payment_status === "paid" && selected.payment_method === "p24" ? <button className={styles.refundButton} onClick={()=>setRefundOpen(true)}>Zwróć pieniądze za pobyt</button> : null}
       </div>
-      {refundOpen ? <div className={styles.refundConfirm}><p className={styles.eyebrow}>ZWROT PRZEZ PRZELEWY24</p><h3>Zwrócić pełną kwotę i anulować pobyt?</h3><p>Zwrot trafi na tę samą metodę płatności. Tej operacji nie można cofnąć.</p>{refundNeedsPin?<label><span>PIN zwrotów</span><input autoFocus type="password" inputMode="numeric" maxLength={4} value={refundPin} onChange={event=>setRefundPin(event.target.value.replace(/\D/g,"").slice(0,4))} placeholder="••••" /></label>:<small>Termin zaczyna się za co najmniej 14 dni — PIN nie jest wymagany.</small>}<div><button onClick={()=>{setRefundOpen(false);setRefundPin("");}}>Wróć</button><button className={styles.danger} disabled={refunding || (refundNeedsPin&&refundPin.length!==4)} onClick={()=>void refund()}>{refunding?"Zlecam zwrot…":"Potwierdzam zwrot"}</button></div></div> : null}
+      {refundOpen ? <div className={styles.refundConfirm}><p className={styles.eyebrow}>ZWROT PRZEZ PRZELEWY24</p><h3>Zwrócić pełną kwotę i anulować pobyt?</h3><p>Zwrot trafi na tę samą metodę płatności. Tej operacji nie można cofnąć.</p><label><span>PIN zwrotów</span><input autoFocus type="password" inputMode="numeric" maxLength={4} value={refundPin} onChange={event=>setRefundPin(event.target.value.replace(/\D/g,"").slice(0,4))} placeholder="••••" /></label><div><button onClick={()=>{setRefundOpen(false);setRefundPin("");}}>Wróć</button><button className={styles.danger} disabled={refunding || refundPin.length!==4} onClick={()=>void refund()}>{refunding?"Zlecam zwrot…":"Potwierdzam zwrot"}</button></div></div> : null}
     </div></Modal> : null}
   </div>;
 }
@@ -670,10 +669,16 @@ function IndividualOffers({ api, data, reload, notify }: ModuleProps) {
     catch(error){notify((error as Error).message);}
   }
   async function send() {
-    if (!editing?.id) { notify("Najpierw zapisz ofertę."); return; }
+    if (!editing) return;
+    if (!editing.client_name || !editing.title) { notify("Uzupełnij klienta i tytuł oferty."); return; }
     if (!editing.client_email) { notify("Podaj adres e-mail klienta."); return; }
     setSending(true);
-    try { await api("individual-offers/send",{method:"POST",body:JSON.stringify({id:editing.id,recipient:editing.client_email})}); await reload(); setEditing(null); notify("Oferta została wysłana klientowi."); }
+    try {
+      const payload={...editing,variants,total_cents:lowestTotal};
+      const saved=await api("individual-offers",{method:editing.id?"PATCH":"POST",body:JSON.stringify(payload)});
+      await api("individual-offers/send",{method:"POST",body:JSON.stringify({id:saved.data.id,recipient:saved.data.client_email})});
+      await reload(); setEditing(null); notify("Oferta została zapisana, sprawdzona i wysłana klientowi.");
+    }
     catch(error){notify((error as Error).message);} finally {setSending(false);}
   }
   return <div className={styles.page}>
@@ -685,7 +690,7 @@ function IndividualOffers({ api, data, reload, notify }: ModuleProps) {
       <Field label="Przyjazd"><input type="date" value={editing.checkin||""} onChange={e=>setEditing({...editing,checkin:e.target.value||null})}/></Field><Field label="Wyjazd"><input type="date" value={editing.checkout||""} onChange={e=>setEditing({...editing,checkout:e.target.value||null})}/></Field><Field label="Liczba gości"><input type="number" min="1" value={editing.guests||1} onChange={e=>setEditing({...editing,guests:Number(e.target.value)})}/></Field><Field label="Ważna do"><input type="date" value={editing.valid_until||""} onChange={e=>setEditing({...editing,valid_until:e.target.value||null})}/></Field>
       <div className={styles.offerItems}><div className={styles.mediaFieldHeader}><span>Warianty do wyboru przez klienta</span><button type="button" onClick={()=>setEditing({...editing,variants:[...variants,{id:crypto.randomUUID(),label:`Wariant ${variants.length+1}`,description:"",total_cents:0}]})}>+ Dodaj wariant</button></div>{variants.map((variant,index)=><div className={styles.offerItem} key={variant.id}><input aria-label="Nazwa wariantu" placeholder="Np. Pobyt z wyżywieniem" value={variant.label} onChange={e=>updateVariant(index,{label:e.target.value})}/><input aria-label="Opis wariantu" placeholder="Co obejmuje wariant" value={variant.description} onChange={e=>updateVariant(index,{description:e.target.value})}/><input aria-label="Cena wariantu w PLN" type="number" min="0" value={variant.total_cents/100} onChange={e=>updateVariant(index,{total_cents:Math.round(Number(e.target.value)*100)})}/><button type="button" aria-label="Usuń wariant" onClick={()=>setEditing({...editing,variants:variants.filter((_,itemIndex)=>itemIndex!==index)})}>×</button></div>)}</div>
       <Field label="Uwagi i warunki" wide><textarea rows={5} value={editing.notes||""} onChange={e=>setEditing({...editing,notes:e.target.value})}/></Field>
-      <div className={styles.offerActions}><button type="button" onClick={()=>setPreview(value=>!value)}>{preview?"Zamknij podgląd":"Podgląd oferty"}</button><button type="button" className={styles.primary} disabled={sending||!editing.id} onClick={()=>void send()}>{sending?"Wysyłanie…":"Wyślij klientowi"}</button></div>
+      <div className={styles.offerActions}><button type="button" onClick={()=>setPreview(value=>!value)}>{preview?"Zamknij podgląd":"Podgląd oferty"}</button><button type="button" className={styles.primary} disabled={sending} onClick={()=>void send()}>{sending?"Zapisuję i sprawdzam termin…":"Zapisz i wyślij klientowi"}</button></div>
       {preview?<section className={styles.offerPreview}><p>OFERTA INDYWIDUALNA · {editing.offer_number||"SZKIC"}</p><h2>{editing.title}</h2><span>Dla {editing.client_name}</span><p>{editing.introduction}</p>{variants.map((variant,index)=><article key={variant.id}><div><strong>Oferta {index+1}: {variant.label}</strong><small>{variant.description}</small></div><b>{money(variant.total_cents)}</b></article>)}{editing.notes?<p>{editing.notes}</p>:null}</section>:null}
     </div></Modal>:null}
   </div>;
