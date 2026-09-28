@@ -65,7 +65,7 @@ export async function POST(request: Request, context: { params: Promise<{ token:
   const { data: reservation, error: reservationError } = await supabase.from("tokama_reservations").insert({
     source:"website", status:"payment_sent", locale:"pl", checkin:offer.checkin, checkout:offer.checkout,
     nights, adults:guests, children:0, houses_count:housesNeeded, guest_name:offer.client_name,
-    guest_email:offer.client_email, guest_phone:"", currency:offer.currency||"PLN", stay_price_cents:Number(variant.total_cents),
+    guest_email:offer.client_email, guest_phone:String(offer.client_phone||"").trim(), currency:offer.currency||"PLN", stay_price_cents:Number(variant.total_cents),
     addons_price_cents:0, total_estimated_cents:Number(variant.total_cents), host_final_amount_cents:Number(variant.total_cents),
     min_nights_at_booking:Math.max(1,nights), base_price_per_house_per_night_cents_at_booking:Number(settings.base_price_per_house_per_night_cents||0),
     individual_offer_id:offer.id, individual_offer_variant_id:variant.id, payment_method:"p24",
