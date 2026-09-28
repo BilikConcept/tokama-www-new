@@ -23,6 +23,7 @@ import {
 } from "@/lib/tokama/legal";
 import { TokamaDateRangePicker } from "./TokamaDateRangePicker";
 import { validatePackageStay } from "@/lib/tokama/packageAvailability";
+import { trackOnce, trackTokamaEvent } from "@/lib/tokama/analytics";
 import styles from "./TokamaBookingPage.module.css";
 
 type Locale = "pl" | "en";
@@ -259,6 +260,22 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
   } | null>(null);
 
   useEffect(() => {
+    trackOnce("view_booking", `${locale}-${individualOfferToken || packageSlug || "standard"}`, {
+      booking_type: individualOfferToken ? "individual_offer" : packageSlug ? "package" : "standard",
+      package_slug: packageSlug || undefined,
+    });
+  }, [individualOfferToken, locale, packageSlug]);
+
+  useEffect(() => {
+    if (!checkin || !checkout) return;
+    trackOnce("select_dates", `${checkin}-${checkout}-${individualOfferToken || packageSlug}`, {
+      checkin,
+      checkout,
+      booking_type: individualOfferToken ? "individual_offer" : packageSlug ? "package" : "standard",
+    });
+  }, [checkin, checkout, individualOfferToken, packageSlug]);
+
+  useEffect(() => {
     async function loadBookingData() {
       const [settingsResponse, packageResponse, heatResponse] = await Promise.all([
         fetch("/api/tokama-booking/settings"),
@@ -438,6 +455,13 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
     }
 
     setSubmitStatus("loading");
+    trackTokamaEvent("begin_booking", {
+      value: total / 100,
+      currency: selectedPackage?.currency || individualOffer?.currency || "PLN",
+      nights,
+      guests: safeAdults + safeChildren,
+      booking_type: individualOffer ? "individual_offer" : selectedPackage ? "package" : "standard",
+    });
     setSubmitErrorMessage(null);
     setAvailabilitySuggestions([]);
     setAvailabilityModalOpen(false);
@@ -492,6 +516,12 @@ export function TokamaBookingPage({ locale = "pl" }: { locale?: Locale }) {
     setAvailabilitySuggestions([]);
     setAvailabilityModalOpen(false);
     setSubmittedReservationCode(result?.reservation?.public_code || null);
+    trackTokamaEvent("booking_request_submitted", {
+      reservation_id: result?.reservation?.public_code || undefined,
+      value: total / 100,
+      currency: selectedPackage?.currency || individualOffer?.currency || "PLN",
+      booking_type: individualOffer ? "individual_offer" : selectedPackage ? "package" : "standard",
+    });
     setSubmitStatus("success");
   }
 

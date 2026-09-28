@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Elements,
@@ -12,12 +12,15 @@ import { loadStripe } from "@stripe/stripe-js";
 import { TOKAMA_BANK_TRANSFER } from "@/lib/payments/bank-transfer";
 import type { P24DemoMethod } from "@/lib/payments/p24-demo";
 import { TOKAMA_TERMS_PATH, TOKAMA_TERMS_VERSION } from "@/lib/tokama/legal";
+import { trackOnce } from "@/lib/tokama/analytics";
 import styles from "./TokamaPaymentPage.module.css";
 
 type SharedPaymentProps = {
   publicCode: string;
   guestName: string;
   amountLabel: string;
+  amountCents: number;
+  currency: string;
   reservationDates: string;
 };
 
@@ -123,11 +126,23 @@ async function savePaymentTermsAcceptance(input: {
 
 function SuccessScreen({
   publicCode,
+  amountCents,
+  currency,
   demo = false,
 }: {
   publicCode: string;
+  amountCents: number;
+  currency: string;
   demo?: boolean;
 }) {
+  useEffect(() => {
+    trackOnce("purchase", publicCode, {
+      transaction_id: publicCode,
+      value: amountCents / 100,
+      currency,
+    });
+  }, [amountCents, currency, publicCode]);
+
   return (
     <section data-tokama-payment-page className={styles.successScreen}>
       <div className={styles.successCard}>
@@ -202,7 +217,7 @@ function StripePaymentForm(props: SharedPaymentProps & { paymentRequestId: strin
   }
 
   if (status === "success") {
-    return <SuccessScreen publicCode={props.publicCode} />;
+    return <SuccessScreen publicCode={props.publicCode} amountCents={props.amountCents} currency={props.currency} />;
   }
 
   return (
@@ -292,6 +307,8 @@ function StripePaymentClient(props: PaymentClientProps) {
         publicCode={props.publicCode}
         guestName={props.guestName}
         amountLabel={props.amountLabel}
+        amountCents={props.amountCents}
+        currency={props.currency}
         reservationDates={props.reservationDates}
       />
     </Elements>
@@ -498,7 +515,7 @@ function P24DemoPaymentClient(props: PaymentClientProps) {
   }
 
   if (status === "success") {
-    return <SuccessScreen publicCode={props.publicCode} demo />;
+    return <SuccessScreen publicCode={props.publicCode} amountCents={props.amountCents} currency={props.currency} demo />;
   }
 
   return (
@@ -633,7 +650,7 @@ function P24PaymentClient(props: PaymentClientProps) {
   }
 
   if (props.initialStatus === "paid") {
-    return <SuccessScreen publicCode={props.publicCode} />;
+    return <SuccessScreen publicCode={props.publicCode} amountCents={props.amountCents} currency={props.currency} />;
   }
 
   return (
@@ -674,6 +691,15 @@ function P24PaymentClient(props: PaymentClientProps) {
 }
 
 export default function TokamaPaymentClient(props: PaymentClientProps) {
+  useEffect(() => {
+    trackOnce("begin_checkout", props.publicCode, {
+      transaction_id: props.publicCode,
+      value: props.amountCents / 100,
+      currency: props.currency,
+      payment_provider: props.provider,
+    });
+  }, [props.amountCents, props.currency, props.provider, props.publicCode]);
+
   if (props.provider === "stripe") {
     return <StripePaymentClient {...props} />;
   }

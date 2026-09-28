@@ -5,6 +5,9 @@ import { SmoothScrollProvider } from "@/components/system/SmoothScrollProvider";
 import { ScrollRevealProvider } from "@/components/system/ScrollRevealProvider";
 import { TokamaGlobalHeader } from "@/components/tokama-site/TokamaGlobalHeader";
 import { TokamaGlobalFooter } from "@/components/tokama-site/TokamaGlobalFooter";
+import { TokamaAnalytics } from "@/components/tokama-site/TokamaAnalytics";
+import { TokamaTagManager, TOKAMA_CONSENT_DEFAULTS } from "@/components/tokama-site/TokamaTagManager";
+import { Suspense } from "react";
 import "./globals.css";
 
 const dmSans = DM_Sans({
@@ -64,7 +67,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pl" className={dmSans.variable}>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: TOKAMA_CONSENT_DEFAULTS }} />
+      </head>
       <body>
+        <TokamaTagManager />
         <SmoothScrollProvider>
           <TokamaGlobalHeader />
           <ScrollRevealProvider>{children}</ScrollRevealProvider>
@@ -72,6 +79,9 @@ export default function RootLayout({
         </SmoothScrollProvider>
 
         <TokamaCookieBanner />
+        <Suspense fallback={null}>
+          <TokamaAnalytics />
+        </Suspense>
       </body>
     </html>
   );

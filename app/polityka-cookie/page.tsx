@@ -25,14 +25,18 @@ const sections: LegalSection[] = [
   },
   {
     title: "3. Jakich plików cookie używamy?",
-    paragraphs: ["Stosowane są dwa rodzaje plików cookie: „sesyjne” oraz „stałe”. Pierwsze z nich są plikami tymczasowymi, które pozostają na urządzeniu użytkownika do wylogowania ze strony internetowej lub wyłączenia przeglądarki. „Stałe” pliki pozostają na urządzeniu użytkownika przez czas określony w parametrach plików cookie albo do momentu ich ręcznego usunięcia przez użytkownika. Pliki cookie wykorzystywane przez partnerów operatora strony internetowej podlegają ich własnej polityce prywatności."],
+    paragraphs: ["Stosujemy trzy kategorie plików cookie: niezbędne, analityczne i reklamowe. Niezbędne odpowiadają za bezpieczeństwo, zapis preferencji oraz działanie rezerwacji i nie można ich wyłączyć. Analityczne pomagają mierzyć sposób korzystania ze strony. Reklamowe służą do pomiaru skuteczności kampanii Google Ads i Meta oraz — po uzyskaniu zgody — do dopasowywania reklam.", "Pliki analityczne i reklamowe nie są zapisywane bez zgody użytkownika. Serwis przekazuje do Google Consent Mode v2 decyzję oddzielnie dla analityki, przechowywania reklamowego, danych reklamowych i personalizacji reklam."],
   },
   {
-    title: "4. Czy pliki cookie zawierają dane osobowe?",
+    title: "4. Narzędzia zewnętrzne",
+    paragraphs: ["Po wyrażeniu odpowiedniej zgody serwis może korzystać z Google Analytics 4, Google Ads i Meta Pixel. Narzędzia te mogą zapisywać identyfikatory urządzenia, informacje o odwiedzonych podstronach oraz zdarzenia związane z procesem rezerwacji. Do systemów analitycznych i reklamowych nie przekazujemy imienia, adresu e-mail ani numeru telefonu podanych w formularzu rezerwacji.", "Zgoda może zostać w każdej chwili zmieniona przez opcję „Ustawienia cookies” w stopce strony."],
+  },
+  {
+    title: "5. Czy pliki cookie zawierają dane osobowe?",
     paragraphs: ["Dane osobowe gromadzone przy użyciu plików cookie mogą być zbierane wyłącznie w celu wykonywania określonych funkcji na rzecz użytkownika. Dane te są zaszyfrowane w sposób uniemożliwiający dostęp do nich osobom nieuprawnionym."],
   },
   {
-    title: "5. Usuwanie plików cookie",
+    title: "6. Usuwanie plików cookie",
     paragraphs: ["Standardowo oprogramowanie służące do przeglądania stron internetowych domyślnie dopuszcza umieszczanie plików cookie na urządzeniu końcowym. Ustawienia te mogą zostać zmienione tak, aby blokować automatyczną obsługę plików cookie w ustawieniach przeglądarki internetowej bądź informować o ich każdorazowym przesłaniu na urządzenie użytkownika.", "Szczegółowe informacje o możliwości i sposobach obsługi plików cookie dostępne są w ustawieniach przeglądarki. Ograniczenie stosowania plików cookie może wpłynąć na niektóre funkcjonalności dostępne na stronie internetowej."],
   },
 ];

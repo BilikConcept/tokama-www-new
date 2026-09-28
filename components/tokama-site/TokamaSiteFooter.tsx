@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { OPEN_COOKIE_SETTINGS_EVENT } from "./TokamaCookieBanner";
 import styles from "./TokamaSiteFooter.module.css";
 
 type Locale = "pl" | "en";
@@ -15,6 +18,7 @@ const copy = {
     contact: "Kontakt",
     payments: "Bezpieczne płatności",
     area: "Okolica",
+    cookieSettings: "Ustawienia cookies",
   },
   en: {
     eyebrow: "TOKAMA · WINDYKI",
@@ -26,6 +30,7 @@ const copy = {
     contact: "Contact",
     payments: "Secure payments",
     area: "Nearby",
+    cookieSettings: "Cookie settings",
   },
 } as const;
 
@@ -85,6 +90,7 @@ export function TokamaSiteFooter({ locale }: { locale: Locale }) {
           <Link href="/regulamin-rezerwacji">{locale === "pl" ? "Regulamin rezerwacji" : "Booking terms"}</Link>
           <Link href="/polityka-prywatnosci">{locale === "pl" ? "Polityka prywatności" : "Privacy policy"}</Link>
           <Link href="/polityka-cookie">{locale === "pl" ? "Polityka cookie" : "Cookie policy"}</Link>
+          <button className={styles.cookieSettings} type="button" onClick={() => window.dispatchEvent(new Event(OPEN_COOKIE_SETTINGS_EVENT))}>{t.cookieSettings}</button>
           <span>NIP 7441830510</span>
         </nav>
       </div>

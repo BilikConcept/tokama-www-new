@@ -111,13 +111,17 @@
 }
 
 .column a,
-.column span {
+.column span,
+.cookieSettings {
   color: #0b0b0b;
   font-size: 13px;
   line-height: 1.5;
   overflow-wrap: anywhere;
   text-decoration: none;
 }
+
+.cookieSettings { padding: 0; border: 0; color: #0b0b0b; background: transparent; font-family: inherit; text-align: left; cursor: pointer; }
+.cookieSettings:hover, .cookieSettings:focus-visible { text-decoration: underline; text-underline-offset: 4px; }
 
 .column a {
   text-underline-offset: 4px;

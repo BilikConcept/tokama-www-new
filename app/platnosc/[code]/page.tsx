@@ -97,6 +97,8 @@ export default async function TokamaPaymentPage({ params }: PageProps) {
           Number(paymentRequest.amount_cents || 0),
           paymentRequest.currency || "PLN"
         )}
+        amountCents={Number(paymentRequest.amount_cents || 0)}
+        currency={paymentRequest.currency || "PLN"}
         reservationDates={`${formatDate(reservation?.checkin || null)} — ${formatDate(
           reservation?.checkout || null
         )}`}
